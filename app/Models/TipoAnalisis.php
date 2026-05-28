@@ -14,11 +14,17 @@ class TipoAnalisis extends Model
     protected $table = 'tipos_analisis';
 
     protected $fillable = [
-        'categoria_id',
         'nombre',
         'costo',
         'unidad_medida',
         'estado',
+        // --- NUEVAS COLUMNAS ---
+        'tipo_parámetro',
+        'rango_min_masculino',
+        'rango_max_masculino',
+        'rango_min_femenino',
+        'rango_max_femenino',
+        'valor_referencia_cualitativo',
     ];
 
     protected $casts = [
