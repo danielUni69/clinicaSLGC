@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use App\Models\TipoUsario;
+
 use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
@@ -23,7 +23,7 @@ class LoginController extends Controller
             'password' => 'required'
         ]);
         if (Auth::attempt($request->only('email', 'password'))) {
-            return redirect()->route('dashboard');
+            return redirect()->route('create-servicio');
         }
         return back()->withErrors([
             'email' => 'Credenciales incorrectas',
@@ -32,11 +32,13 @@ class LoginController extends Controller
     public function logout()
     {
         Auth::logout();
-        return redirect()->route('dashboard');
+        return redirect()->route('create-servicio');
     }
     public function showRegister()
     {
-        $tipos = TipoUsario::all();
+        // En este proyecto no existe la tabla `tipo_usuario`.
+        // El registro se hace solo con name/email/password.
+        $tipos = [];
         return view('auth.register', compact('tipos'));
     }
     public function register(Request $request)
@@ -45,18 +47,16 @@ class LoginController extends Controller
             'name'           => 'required',
             'email'          => 'required|email|unique:users',
             'password'       => 'required|confirmed|min:4',
-            'tipo_usuario_id'=> 'required|exists:tipo_usuario,id',
         ]);
 
         $user = User::create([
             'name'           => $request->name,
             'email'          => $request->email,
             'password'       => Hash::make($request->password),
-            'tipo_usuario_id'=> $request->tipo_usuario_id,
         ]);
 
         Auth::login($user);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('create-servicio');
     }
 }
