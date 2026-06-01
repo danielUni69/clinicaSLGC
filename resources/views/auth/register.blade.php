@@ -18,8 +18,20 @@
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-sky-100">
         <div class="grid grid-cols-1 md:grid-cols-2">
 
-            <!-- IZQUIERDA: formulario (igual estilo login) -->
+            <!-- IZQUIERDA -->
             <div class="p-8 md:p-10 bg-gradient-to-b from-sky-50 to-white">
+
+                {{-- Botón volver --}}
+                <div class="mb-6">
+                    <a href="{{ url('/administracion/usuarios') }}"
+                       class="inline-flex items-center gap-2 text-sm font-semibold text-sky-600 hover:text-sky-500 transition duration-200">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Volver a usuarios
+                    </a>
+                </div>
+
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <div class="absolute -inset-3 bg-sky-200/40 rounded-full blur-2xl"></div>
@@ -40,9 +52,10 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('register.post') }}" class="space-y-5">
+                <form method="POST" action="{{ route('register.post') }}" class="space-y-5 mt-6">
                     @csrf
 
+                    {{-- Nombre --}}
                     <div>
                         <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">Nombre</label>
                         <div class="relative">
@@ -51,20 +64,16 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 10-8 0 4 4 0 008 0zM12 14c-4.418 0-8 1.79-8 4v2h16v-2c0-2.21-3.582-4-8-4z" />
                                 </svg>
                             </div>
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                required
-                                value="{{ old('name') }}"
+                            <input id="name" name="name" type="text" required value="{{ old('name') }}"
                                 class="block w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition duration-200"
                                 placeholder="Tu nombre">
                         </div>
                         @error('name')
-                            <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i> {{ $message }}</span>
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                         @enderror
                     </div>
 
+                    {{-- Email --}}
                     <div>
                         <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Correo</label>
                         <div class="relative">
@@ -73,20 +82,63 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                                 </svg>
                             </div>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                required
-                                value="{{ old('email') }}"
+                            <input id="email" name="email" type="email" required value="{{ old('email') }}"
                                 class="block w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition duration-200"
                                 placeholder="tu@email.com">
                         </div>
                         @error('email')
-                            <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i> {{ $message }}</span>
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                         @enderror
                     </div>
 
+                    {{-- Rol --}}
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Rol</label>
+                        <div class="grid grid-cols-2 gap-3">
+
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="role" value="bioquimico"
+                                    class="peer sr-only"
+                                    {{ old('role') === 'bioquimico' ? 'checked' : '' }}>
+                                <div class="flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 bg-white
+                                            peer-checked:border-sky-400 peer-checked:bg-sky-50 transition duration-200">
+                                    <div class="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-800">Bioquímico</p>
+                                        <p class="text-xs text-slate-500">Lab. y resultados</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="role" value="recepcionista"
+                                    class="peer sr-only"
+                                    {{ old('role') === 'recepcionista' ? 'checked' : '' }}>
+                                <div class="flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 bg-white
+                                            peer-checked:border-sky-400 peer-checked:bg-sky-50 transition duration-200">
+                                    <div class="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-800">Recepcionista</p>
+                                        <p class="text-xs text-slate-500">Turnos y pacientes</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                        </div>
+                        @error('role')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- Contraseña --}}
                     <div>
                         <label for="password" class="block text-sm font-semibold text-slate-700 mb-2">Contraseña</label>
                         <div class="relative">
@@ -95,19 +147,16 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                             </div>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
+                            <input id="password" name="password" type="password" required
                                 class="block w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition duration-200"
                                 placeholder="••••••••">
                         </div>
                         @error('password')
-                            <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i> {{ $message }}</span>
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                         @enderror
                     </div>
 
+                    {{-- Confirmar contraseña --}}
                     <div>
                         <label for="password_confirmation" class="block text-sm font-semibold text-slate-700 mb-2">Confirmar contraseña</label>
                         <div class="relative">
@@ -116,23 +165,16 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
                             </div>
-                            <input
-                                id="password_confirmation"
-                                name="password_confirmation"
-                                type="password"
-                                required
+                            <input id="password_confirmation" name="password_confirmation" type="password" required
                                 class="block w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition duration-200"
                                 placeholder="••••••••">
                         </div>
                         @error('password_confirmation')
-                            <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i> {{ $message }}</span>
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                         @enderror
                     </div>
 
-
-
-                    <button
-                        type="submit"
+                    <button type="submit"
                         class="w-full celeste-gradient py-3 px-4 rounded-xl font-semibold text-white hover:shadow-lg transform hover:scale-[1.01] transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-300">
                         <span class="flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -143,18 +185,9 @@
                     </button>
 
                 </form>
-
-                <div class="mt-7 pt-6 border-t border-slate-100">
-                    <p class="text-center text-slate-500 text-sm">
-                        ¿Ya tienes una cuenta?
-                        <a href="{{ route('login') }}" class="text-sky-600 hover:text-sky-500 font-semibold transition duration-200 ml-1">
-                            Volver al login
-                        </a>
-                    </p>
-                </div>
             </div>
 
-            <!-- DERECHA: panel visual (igual estilo login) -->
+            <!-- DERECHA -->
             <div class="hidden md:flex items-center justify-center p-10 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.22),transparent_55%)]">
                 <div class="w-full max-w-sm rounded-3xl border border-sky-100 bg-white/70 backdrop-blur p-8 shadow-sm">
                     <div class="text-center">
@@ -162,11 +195,9 @@
                         <h4 class="mt-2 text-xl font-bold text-slate-900">Tu acceso en pocos pasos</h4>
                         <p class="mt-2 text-slate-600 text-sm">Crea tu cuenta y comienza a gestionar.</p>
                     </div>
-
                     <div class="mt-7 flex items-center justify-center">
                         <img src="{{ asset('img/logo.png') }}" alt="Imagen" class="w-40 h-40 object-contain drop-shadow">
                     </div>
-
                     <div class="mt-6">
                         <div class="h-2 rounded-full bg-sky-100">
                             <div class="h-2 w-3/4 rounded-full celeste-gradient"></div>
@@ -186,4 +217,3 @@
 
 </body>
 </html>
-

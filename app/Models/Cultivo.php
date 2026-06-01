@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Cultivo extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'servicio_id',
         'tipo_analisis_id',
-        'estado_cultivo', // 'en_incubacion', 'negativo', 'positivo_identificado'
+        'estado_cultivo',
         'cepa_bacteriana',
         'bioquimico_id',
     ];
@@ -32,14 +29,13 @@ class Cultivo extends Model
         return $this->belongsTo(User::class, 'bioquimico_id');
     }
 
-    // Relaciones hijas (Nivel 5)
-    public function evoluciones()
-    {
-        return $this->hasMany(ReporteEvolucion::class);
-    }
-
     public function antibiogramas()
     {
         return $this->hasMany(Antibiograma::class);
+    }
+
+    public function reportesEvolucion()
+    {
+        return $this->hasMany(ReporteEvolucion::class, 'cultivo_id');
     }
 }

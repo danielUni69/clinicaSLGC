@@ -129,10 +129,20 @@
                                     <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Opcional</span>
                                 </h3>
 
-                                <label class="flex items-center gap-2 cursor-pointer select-none">
-                                    <input type="checkbox" wire:model="tiene_responsable" class="h-4 w-4 accent-blue-600">
-                                    <span class="text-sm font-medium text-gray-700">Tiene responsable</span>
-                                </label>
+                                <div class="mt-2">
+                                    @if(!$tiene_responsable)
+                                        <button type="button" wire:click="tiene_responsable_set(true)" class="px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg hover:bg-blue-100 transition">
+                                            <i class="fas fa-user-shield mr-1"></i> Agregar responsable
+                                        </button>
+                                    @endif
+
+                                    @if($tiene_responsable)
+                                        <button type="button" wire:click="tiene_responsable_set(false)" class="px-3 py-1.5 text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
+                                            <i class="fas fa-times mr-1"></i> Quitar responsable
+                                        </button>
+                                    @endif
+                                </div>
+
                             </div>
 
                             @if($tiene_responsable)

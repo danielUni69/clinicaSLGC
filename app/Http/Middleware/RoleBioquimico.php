@@ -11,9 +11,16 @@ class RoleBioquimico
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && in_array(Auth::user()->role, ['administrador', 'bioquimico'])) {
+        if (!Auth::check()) {
+            return abort(403, 'Acceso denegado.');
+        }
+
+        $role = strtolower(trim((string) Auth::user()->role));
+
+        if (in_array($role, ['administrador', 'bioquimico'])) {
             return $next($request);
         }
+
 
         return abort(403, 'Acceso denegado. Área exclusiva para personal de Laboratorio.');
     }

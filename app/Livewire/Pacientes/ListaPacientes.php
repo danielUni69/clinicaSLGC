@@ -12,18 +12,28 @@ class ListaPacientes extends Component
 {
     use WithPagination;
 
+    public function tiene_responsable_set(bool $valor): void
+    {
+        $this->tiene_responsable = $valor;
+
+        if (!$valor) {
+            $this->responsable_nombre = '';
+            $this->responsable_celular = null;
+            $this->responsable_relacion = 'Familiar';
+        }
+    }
+
     public string $search = '';
 
-    // --- Formulario ("pestaña escodita") ---
     public bool $mostrarFormulario = false;
-    public string $modo = 'crear'; // 'crear' | 'editar'
+    public string $modo = 'crear';
     public ?int $editando_id = null;
 
     // Paciente
     public string $ci = '';
     public string $nombre_completo = '';
     public string $fecha_nacimiento = '';
-    public string $sexo = 'M'; // M/F
+    public string $sexo = 'M';
     public ?string $telefono = null;
 
     // Responsable (opcional)
@@ -92,37 +102,45 @@ class ListaPacientes extends Component
 
     protected function rules(): array
     {
-        $sexoRule = 'required|in:M,F';
+        // Fecha máxima: ayer (no se permite hoy ni futuro)
+        $maxFecha = now()->subDay()->format('Y-m-d');
+
+        $baseRules = [
+            'ci'               => 'required|string|max:14',
+            'nombre_completo'  => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'fecha_nacimiento' => "required|date|before:{$maxFecha}",
+            'sexo'             => 'required|in:M,F',
+            'telefono'         => 'nullable|digits_between:1,9',
+
+            'tiene_responsable'    => 'boolean',
+            'responsable_nombre'   => ['required_if:tiene_responsable,true', 'nullable', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'responsable_celular'  => 'nullable|digits_between:1,9',
+            'responsable_relacion' => 'required_if:tiene_responsable,true|nullable|string|max:100',
+        ];
 
         if ($this->modo === 'editar') {
-            return [
-                'ci' => [
-                    'required',
-                    'string',
-                    'max:20',
-                    Rule::unique('pacientes', 'ci')->ignore($this->editando_id),
-                ],
-                'nombre_completo' => 'required|string|max:255',
-                'fecha_nacimiento' => 'required|date',
-                'sexo' => $sexoRule,
-                'telefono' => 'nullable|string|max:30',
-                'tiene_responsable' => 'boolean',
-                'responsable_nombre' => 'required_if:tiene_responsable,true|string|max:255',
-                'responsable_celular' => 'nullable|string|max:30',
-                'responsable_relacion' => 'required_if:tiene_responsable,true|string|max:100',
+            $baseRules['ci'] = [
+                'required',
+                'string',
+                'max:14',
+                Rule::unique('pacientes', 'ci')->ignore($this->editando_id),
             ];
+        } else {
+            $baseRules['ci'] = 'required|string|max:14|unique:pacientes,ci';
         }
 
+        return $baseRules;
+    }
+
+    protected function messages(): array
+    {
         return [
-            'ci' => 'required|string|max:20|unique:pacientes,ci',
-            'nombre_completo' => 'required|string|max:255',
-            'fecha_nacimiento' => 'required|date',
-            'sexo' => $sexoRule,
-            'telefono' => 'nullable|string|max:30',
-            'tiene_responsable' => 'boolean',
-            'responsable_nombre' => 'required_if:tiene_responsable,true|string|max:255',
-            'responsable_celular' => 'nullable|string|max:30',
-            'responsable_relacion' => 'required_if:tiene_responsable,true|string|max:100',
+            'ci.max'                      => 'El CI no puede tener más de 14 caracteres.',
+            'nombre_completo.regex'       => 'El nombre solo puede contener letras y espacios.',
+            'fecha_nacimiento.before'     => 'La fecha de nacimiento no puede ser hoy ni una fecha futura.',
+            'telefono.digits_between'     => 'El teléfono no puede tener más de 9 dígitos.',
+            'responsable_nombre.regex'    => 'El nombre del responsable solo puede contener letras y espacios.',
+            'responsable_celular.digits_between' => 'El celular del responsable no puede tener más de 9 dígitos.',
         ];
     }
 
@@ -132,11 +150,13 @@ class ListaPacientes extends Component
 
         $responsableId = null;
 
-        if (!empty($validated['tiene_responsable']) && trim($validated['responsable_nombre'] ?? '') !== '') {
+        $tieneResponsable = (bool) ($validated['tiene_responsable'] ?? false);
+
+        if ($tieneResponsable && trim($validated['responsable_nombre'] ?? '') !== '') {
+
             if ($this->modo === 'editar') {
                 $paciente = Paciente::with('responsable')->findOrFail($this->editando_id);
 
-                // Si el paciente NO tenía responsable, no podemos usar el nombre actual como llave.
                 $where = $paciente->responsable ? ['id' => $paciente->responsable->id] : [];
 
                 if (!empty($where)) {
@@ -144,15 +164,15 @@ class ListaPacientes extends Component
                         $where,
                         [
                             'nombre_completo' => $validated['responsable_nombre'],
-                            'celular' => $validated['responsable_celular'] ?? 'Sin registro',
-                            'relacion' => $validated['responsable_relacion'] ?? 'Familiar',
+                            'celular'         => $validated['responsable_celular'] ?? 'Sin registro',
+                            'relacion'        => $validated['responsable_relacion'] ?? 'Familiar',
                         ]
                     );
                 } else {
                     $nuevoResponsable = Responsable::create([
                         'nombre_completo' => $validated['responsable_nombre'],
-                        'celular' => $validated['responsable_celular'] ?? 'Sin registro',
-                        'relacion' => $validated['responsable_relacion'] ?? 'Familiar',
+                        'celular'         => $validated['responsable_celular'] ?? 'Sin registro',
+                        'relacion'        => $validated['responsable_relacion'] ?? 'Familiar',
                     ]);
                     $responsableId = $nuevoResponsable->id;
                 }
@@ -161,8 +181,8 @@ class ListaPacientes extends Component
             } else {
                 $responsable = Responsable::create([
                     'nombre_completo' => $validated['responsable_nombre'],
-                    'celular' => $validated['responsable_celular'] ?? 'Sin registro',
-                    'relacion' => $validated['responsable_relacion'] ?? 'Familiar',
+                    'celular'         => $validated['responsable_celular'] ?? 'Sin registro',
+                    'relacion'        => $validated['responsable_relacion'] ?? 'Familiar',
                 ]);
 
                 $responsableId = $responsable->id;
@@ -173,12 +193,12 @@ class ListaPacientes extends Component
             $paciente = Paciente::findOrFail($this->editando_id);
 
             $paciente->update([
-                'responsable_id' => $paciente->responsable?->id ?? $responsableId,
-                'ci' => $validated['ci'],
+                'responsable_id'  => $paciente->responsable?->id ?? $responsableId,
+                'ci'              => $validated['ci'],
                 'nombre_completo' => $validated['nombre_completo'],
-                'fecha_nacimiento' => $validated['fecha_nacimiento'],
-                'sexo' => $validated['sexo'],
-                'telefono' => $validated['telefono'],
+                'fecha_nacimiento'=> $validated['fecha_nacimiento'],
+                'sexo'            => $validated['sexo'],
+                'telefono'        => $validated['telefono'],
             ]);
 
             session()->flash('message', "Paciente {$paciente->nombre_completo} actualizado correctamente.");
@@ -187,12 +207,12 @@ class ListaPacientes extends Component
         }
 
         $paciente = Paciente::create([
-            'responsable_id' => $responsableId,
-            'ci' => $validated['ci'],
+            'responsable_id'  => $responsableId,
+            'ci'              => $validated['ci'],
             'nombre_completo' => $validated['nombre_completo'],
-            'fecha_nacimiento' => $validated['fecha_nacimiento'],
-            'sexo' => $validated['sexo'],
-            'telefono' => $validated['telefono'],
+            'fecha_nacimiento'=> $validated['fecha_nacimiento'],
+            'sexo'            => $validated['sexo'],
+            'telefono'        => $validated['telefono'],
         ]);
 
         session()->flash('message', 'Paciente registrado correctamente.');
@@ -240,4 +260,3 @@ class ListaPacientes extends Component
         ]);
     }
 }
-

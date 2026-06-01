@@ -20,6 +20,18 @@
 
             <!-- IZQUIERDA: formulario -->
             <div class="p-8 md:p-10 bg-gradient-to-b from-sky-50 to-white">
+
+                @auth
+                    <div class="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-xl text-sm text-sky-800">
+                        Estás logueado/a como <span class="font-semibold">{{ Auth::user()->name }}</span>.
+                        <form method="POST" action="{{ route('logout') }}" class="inline">
+                            @csrf
+                            <button type="submit" class="ml-3 text-sm font-semibold text-red-600 hover:text-red-700">
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
+                @endauth
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <div class="absolute -inset-3 bg-sky-200/40 rounded-full blur-2xl"></div>
@@ -40,7 +52,8 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login.post') }}" class="space-y-5">
+<form method="POST" action="{{ route('login.post') }}" class="space-y-5">
+                    <!-- Nota: este formulario es solo para iniciar sesión -->
                     @csrf
 
                     <div>
@@ -96,14 +109,7 @@
 
                 
 
-                    <div class="mt-7 pt-6 border-t border-slate-100">
-                        <p class="text-center text-slate-500 text-sm">
-                            ¿Aún no tienes cuenta?
-                            <a href="{{ route('register') }}" class="text-sky-600 hover:text-sky-500 font-semibold transition duration-200 ml-1">
-                                Crear cuenta
-                            </a>
-                        </p>
-                    </div>
+                    
                
             </div>
 

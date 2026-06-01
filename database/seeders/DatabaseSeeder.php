@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             TipoAnalisisSeeder::class,
             PacienteSeeder::class,
             MedicoSeeder::class,
-            TipoAnalisisSeeder::class,
+            UsuarioSeeder::class,
         ]);
     }
 }

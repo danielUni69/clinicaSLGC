@@ -2,14 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ReporteEvolucion extends Model
 {
-    use HasFactory;
-
     protected $table = 'reportes_evolucion';
 
     protected $fillable = [
@@ -17,8 +13,8 @@ class ReporteEvolucion extends Model
         'observacion',
     ];
 
-    public function cultivo(): BelongsTo
+    public function cultivo()
     {
-        return $this->belongsTo(Cultivo::class, 'cultivo_id');
+        return $this->belongsTo(Cultivo::class);
     }
 }

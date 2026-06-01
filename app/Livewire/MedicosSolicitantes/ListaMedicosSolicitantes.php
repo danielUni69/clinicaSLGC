@@ -13,9 +13,8 @@ class ListaMedicosSolicitantes extends Component
 
     public string $search = '';
 
-    // --- Formulario ("pestaña escodita") ---
     public bool $mostrarFormulario = false;
-    public string $modo = 'crear'; // 'crear' | 'editar'
+    public string $modo = 'crear';
     public ?int $editando_id = null;
 
     // Medico
@@ -72,25 +71,29 @@ class ListaMedicosSolicitantes extends Component
 
     protected function rules(): array
     {
+        $baseRules = [
+            'nombre_completo'       => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'especialidad'          => ['nullable', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'matricula_profesional' => ['required', 'string', 'max:14'],
+            'correo'                => ['nullable', 'string', 'email', 'max:255'],
+        ];
+
         if ($this->modo === 'editar') {
-            return [
-                'nombre_completo' => 'required|string|max:255',
-                'especialidad' => 'nullable|string|max:255',
-                'matricula_profesional' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::unique('medicos_solicitantes', 'matricula_profesional')->ignore($this->editando_id),
-                ],
-                'correo' => 'nullable|string|email|max:255',
-            ];
+            $baseRules['matricula_profesional'][] = Rule::unique('medicos_solicitantes', 'matricula_profesional')->ignore($this->editando_id);
+        } else {
+            $baseRules['matricula_profesional'][] = 'unique:medicos_solicitantes,matricula_profesional';
         }
 
+        return $baseRules;
+    }
+
+    protected function messages(): array
+    {
         return [
-            'nombre_completo' => 'required|string|max:255',
-            'especialidad' => 'nullable|string|max:255',
-            'matricula_profesional' => 'required|string|max:255|unique:medicos_solicitantes,matricula_profesional',
-            'correo' => 'nullable|string|email|max:255',
+            'nombre_completo.regex'          => 'El nombre solo puede contener letras y espacios.',
+            'especialidad.regex'             => 'La especialidad solo puede contener letras y espacios.',
+            'matricula_profesional.max'      => 'La matrícula no puede tener más de 14 caracteres.',
+            'matricula_profesional.unique'   => 'Esta matrícula ya está registrada.',
         ];
     }
 
@@ -101,10 +104,10 @@ class ListaMedicosSolicitantes extends Component
         if ($this->modo === 'editar') {
             $medico = MedicoSolicitante::query()->findOrFail($this->editando_id);
             $medico->update([
-                'nombre_completo' => $validated['nombre_completo'],
-                'especialidad' => $validated['especialidad'] ?? null,
+                'nombre_completo'       => $validated['nombre_completo'],
+                'especialidad'          => $validated['especialidad'] ?? null,
                 'matricula_profesional' => $validated['matricula_profesional'],
-                'correo' => $validated['correo'] ?? null,
+                'correo'                => $validated['correo'] ?? null,
             ]);
 
             session()->flash('message', "Médico {$medico->nombre_completo} actualizado correctamente.");
@@ -113,10 +116,10 @@ class ListaMedicosSolicitantes extends Component
         }
 
         $medico = MedicoSolicitante::query()->create([
-            'nombre_completo' => $validated['nombre_completo'],
-            'especialidad' => $validated['especialidad'] ?? null,
+            'nombre_completo'       => $validated['nombre_completo'],
+            'especialidad'          => $validated['especialidad'] ?? null,
             'matricula_profesional' => $validated['matricula_profesional'],
-            'correo' => $validated['correo'] ?? null,
+            'correo'                => $validated['correo'] ?? null,
         ]);
 
         session()->flash('message', 'Médico registrado correctamente.');
@@ -133,8 +136,6 @@ class ListaMedicosSolicitantes extends Component
         $medico = MedicoSolicitante::query()->findOrFail($id);
         $nombre = $medico->nombre_completo;
 
-        // Si en tu BD existen servicios asociados, esto podría fallar por FK.
-        // Lo dejamos como está para que se vea el error si aplica.
         $medico->delete();
 
         $this->confirmando_borrar_id = null;
@@ -163,4 +164,3 @@ class ListaMedicosSolicitantes extends Component
         ]);
     }
 }
-
