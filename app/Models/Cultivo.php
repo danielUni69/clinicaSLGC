@@ -4,9 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cultivo extends Model
 {
@@ -15,44 +12,34 @@ class Cultivo extends Model
     protected $fillable = [
         'servicio_id',
         'tipo_analisis_id',
-        'estado_cultivo',
+        'estado_cultivo', // 'en_incubacion', 'negativo', 'positivo_identificado'
         'cepa_bacteriana',
         'bioquimico_id',
     ];
 
-    public function servicio(): BelongsTo
+    public function servicio()
     {
-        return $this->belongsTo(Servicio::class, 'servicio_id');
+        return $this->belongsTo(Servicio::class);
     }
 
-    public function antibioticos(): BelongsToMany
+    public function tipoAnalisis()
     {
-        return $this->belongsToMany(Antibiotico::class, 'antibiogramas', 'cultivo_id', 'antibiotico_id')
-            ->using(Antibiograma::class) // <-- Le dice a Laravel que use tu modelo Pivot
-            ->withPivot('susceptibilidad')
-            ->withTimestamps();
+        return $this->belongsTo(TipoAnalisis::class);
     }
 
-    public function tipoAnalisis(): BelongsTo
-    {
-        return $this->belongsTo(TipoAnalisis::class, 'tipo_analisis_id');
-    }
-
-    public function bioquimico(): BelongsTo
+    public function bioquimico()
     {
         return $this->belongsTo(User::class, 'bioquimico_id');
     }
 
-    public function reportesEvolucion(): HasMany
+    // Relaciones hijas (Nivel 5)
+    public function evoluciones()
     {
-        return $this->hasMany(ReporteEvolucion::class, 'cultivo_id');
+        return $this->hasMany(ReporteEvolucion::class);
     }
 
-    // Relación Muchos a Muchos con Antibióticos usando la tabla pivote antibiogramas
-    public function antibioticos(): BelongsToMany
+    public function antibiogramas()
     {
-        return $this->belongsToMany(Antibiotico::class, 'antibiogramas', 'cultivo_id', 'antibiotico_id')
-            ->withPivot('susceptibilidad')
-            ->withTimestamps();
+        return $this->hasMany(Antibiograma::class);
     }
 }

@@ -2,23 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Database\Eloquent\Model;
 
-class Antibiograma extends Pivot
+class Antibiograma extends Model
 {
-    protected $table = 'antibiogramas';
+    protected $fillable = ['cultivo_id', 'antibiotico_id', 'susceptibilidad'];
 
-    // Aquí sí es importante el fillable por la susceptibilidad
-    protected $fillable = [
-        'cultivo_id',
-        'antibiotico_id',
-        'susceptibilidad',
-    ];
+    public function cultivo()
+    {
+        return $this->belongsTo(Cultivo::class);
+    }
 
-    // Puedes agregar constantes para mantener tu código limpio en Livewire
-    const SENSIBLE = 'S';
-
-    const INTERMEDIO = 'I';
-
-    const RESISTENTE = 'R';
+    public function antibiotico()
+    {
+        return $this->belongsTo(Antibiotico::class);
+    }
 }
