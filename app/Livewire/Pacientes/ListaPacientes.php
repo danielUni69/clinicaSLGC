@@ -24,12 +24,16 @@ class ListaPacientes extends Component
     public string $fecha_nacimiento = '';
     public string $sexo = 'M';
     public ?string $telefono = null;
+    public ?string $email = null;
+
 
     // Responsable (opcional)
     public bool $tiene_responsable = false;
     public string $responsable_nombre = '';
     public ?string $responsable_celular = null;
+    public ?string $responsable_email = null;
     public string $responsable_relacion = 'Familiar';
+
 
     // Borrado
     public ?int $confirmando_borrar_id = null;
@@ -97,8 +101,9 @@ class ListaPacientes extends Component
         $this->tiene_responsable = $valor;
 
         if (!$valor) {
-            $this->responsable_nombre  = '';
-            $this->responsable_celular = null;
+            $this->responsable_nombre   = '';
+            $this->responsable_celular  = null;
+            $this->responsable_email    = null;
             $this->responsable_relacion = 'Familiar';
         }
     }
@@ -135,10 +140,12 @@ class ListaPacientes extends Component
             : '';
         $this->sexo     = (string) $paciente->sexo;
         $this->telefono = $paciente->telefono;
+        $this->email    = $paciente->email;
 
         $this->tiene_responsable    = (bool) $paciente->responsable;
         $this->responsable_nombre   = $paciente->responsable?->nombre_completo ?? '';
         $this->responsable_celular  = $paciente->responsable?->celular ?? null;
+        $this->responsable_email    = $paciente->responsable?->correo ?? null;
         $this->responsable_relacion = $paciente->responsable?->relacion ?? 'Familiar';
     }
 
@@ -157,10 +164,12 @@ class ListaPacientes extends Component
         $this->fecha_nacimiento = '';
         $this->sexo             = 'M';
         $this->telefono         = null;
+        $this->email            = null;
 
         $this->tiene_responsable    = false;
         $this->responsable_nombre   = '';
         $this->responsable_celular  = null;
+        $this->responsable_email    = null;
         $this->responsable_relacion = 'Familiar';
     }
 
@@ -186,10 +195,18 @@ class ListaPacientes extends Component
             // Teléfono: solo dígitos, máximo 8
             'telefono' => 'nullable|digits_between:1,8',
 
-            'tiene_responsable'    => 'boolean',
+            // Email paciente (opcional): máximo 30, 1 @, dominio con punto
+            'email' => [
+                'nullable',
+                'string',
+                'max:30',
+                'regex:/^[^@\s]{1,64}@[A-Za-z0-9.-]+\.[A-Za-z]{2,10}$/',
+            ],
+
+            'tiene_responsable' => 'boolean',
 
             // Nombre responsable: solo letras Unicode y espacios, máximo 30
-            'responsable_nombre'   => [
+            'responsable_nombre' => [
                 'required_if:tiene_responsable,true',
                 'nullable', 'string', 'min:3', 'max:30',
                 'regex:/^[\pL\s]+$/u',
@@ -198,6 +215,14 @@ class ListaPacientes extends Component
             // Celular responsable: solo dígitos, máximo 8
             'responsable_celular'  => 'nullable|digits_between:1,8',
             'responsable_relacion' => 'required_if:tiene_responsable,true|nullable|string|max:100',
+
+            // Email responsable (opcional): máximo 30, formato válido
+            'responsable_email' => [
+                'nullable',
+                'string',
+                'max:30',
+                'regex:/^[^@\s]{1,64}@[A-Za-z0-9.-]+\.[A-Za-z]{2,10}$/',
+            ],
         ];
 
         if ($this->modo === 'editar') {
@@ -227,10 +252,12 @@ class ListaPacientes extends Component
             'nombre_completo.max'                => 'El nombre no puede tener más de 30 caracteres.',
             'fecha_nacimiento.before_or_equal'   => 'La fecha de nacimiento no puede ser hoy ni una fecha futura.',
             'telefono.digits_between'            => 'El teléfono no puede tener más de 8 dígitos.',
+            'email.regex'                        => 'El correo del paciente no tiene un formato válido.',
             'responsable_nombre.min'             => 'El nombre del responsable debe tener al menos 3 letras.',
             'responsable_nombre.regex'           => 'El nombre del responsable solo puede contener letras y espacios.',
             'responsable_nombre.max'             => 'El nombre del responsable no puede tener más de 30 caracteres.',
             'responsable_celular.digits_between' => 'El celular del responsable no puede tener más de 8 dígitos.',
+            'responsable_email.regex'            => 'El correo del responsable no tiene un formato válido.',
         ];
     }
 
@@ -243,6 +270,15 @@ class ListaPacientes extends Component
         $responsableId = null;
 
         $tieneResponsable = (bool) ($validated['tiene_responsable'] ?? false);
+
+        // ── Si quitaron el responsable en modo editar, borrarlo de BD ──────────
+        if (!$tieneResponsable && $this->modo === 'editar') {
+            $pac = Paciente::with('responsable')->find($this->editando_id);
+            if ($pac?->responsable) {
+                $pac->responsable->delete();
+                $pac->update(['responsable_id' => null]);
+            }
+        }
 
         if ($tieneResponsable && trim($validated['responsable_nombre'] ?? '') !== '') {
 
@@ -257,6 +293,7 @@ class ListaPacientes extends Component
                         [
                             'nombre_completo' => $validated['responsable_nombre'],
                             'celular'         => $validated['responsable_celular'] ?? 'Sin registro',
+                            'correo'          => $validated['responsable_email'] ?? null,
                             'relacion'        => $validated['responsable_relacion'] ?? 'Familiar',
                         ]
                     );
@@ -264,8 +301,10 @@ class ListaPacientes extends Component
                     $nuevoResponsable = Responsable::create([
                         'nombre_completo' => $validated['responsable_nombre'],
                         'celular'         => $validated['responsable_celular'] ?? 'Sin registro',
+                        'correo'          => $validated['responsable_email'] ?? null,
                         'relacion'        => $validated['responsable_relacion'] ?? 'Familiar',
                     ]);
+
                     $responsableId = $nuevoResponsable->id;
                 }
 
@@ -275,6 +314,7 @@ class ListaPacientes extends Component
                 $responsable = Responsable::create([
                     'nombre_completo' => $validated['responsable_nombre'],
                     'celular'         => $validated['responsable_celular'] ?? 'Sin registro',
+                    'correo'          => $validated['responsable_email'] ?? null,
                     'relacion'        => $validated['responsable_relacion'] ?? 'Familiar',
                 ]);
 
@@ -286,12 +326,13 @@ class ListaPacientes extends Component
             $paciente = Paciente::findOrFail($this->editando_id);
 
             $paciente->update([
-                'responsable_id'   => $paciente->responsable?->id ?? $responsableId,
+                'responsable_id'   => $tieneResponsable ? ($paciente->responsable?->id ?? $responsableId) : null,
                 'ci'               => $validated['ci'],
                 'nombre_completo'  => $validated['nombre_completo'],
                 'fecha_nacimiento' => $validated['fecha_nacimiento'],
                 'sexo'             => $validated['sexo'],
                 'telefono'         => $validated['telefono'],
+                'email'            => $validated['email'] ?? null,
             ]);
 
             session()->flash('message', "Paciente {$paciente->nombre_completo} actualizado correctamente.");
@@ -306,6 +347,7 @@ class ListaPacientes extends Component
             'fecha_nacimiento' => $validated['fecha_nacimiento'],
             'sexo'             => $validated['sexo'],
             'telefono'         => $validated['telefono'],
+            'email'            => $validated['email'] ?? null,
         ]);
 
         session()->flash('message', 'Paciente registrado correctamente.');

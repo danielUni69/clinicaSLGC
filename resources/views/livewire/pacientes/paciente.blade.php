@@ -61,7 +61,7 @@
                     </button>
                 </div>
 
-                <div class="p-6">
+                <div class="p-6 overflow-y-auto max-h-[80vh]">
                     <form wire:submit.prevent="guardar" class="space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
@@ -207,6 +207,38 @@
                                     </span>
                                 @enderror
                             </div>
+
+                            {{-- Email Paciente --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                    Email
+                                    <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">opcional (máx. 30)</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="email"
+                                        wire:model.live="email"
+                                        placeholder="Ej: paciente@gmail.com"
+                                        maxlength="30"
+                                        class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                            {{ $errors->has('email')
+                                                ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                : ($email && !$errors->has('email')
+                                                    ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                    : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                    @if ($email && !$errors->has('email'))
+                                        <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    @endif
+                                </div>
+                                @error('email')
+                                    <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                        <i class="fas fa-times-circle"></i> {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
                         </div>
 
                         {{-- Responsable --}}
@@ -239,7 +271,7 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                                     {{-- Nombre Responsable --}}
-                                    <div class="md:col-span-1">
+                                    <div>
                                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
                                             Nombre
                                             <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">máx. 30</span>
@@ -329,6 +361,38 @@
                                             </span>
                                         @enderror
                                     </div>
+
+                                    {{-- Email Responsable --}}
+                                    <div class="md:col-span-3">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                            Email Responsable
+                                            <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">opcional (máx. 30)</span>
+                                        </label>
+                                        <div class="relative">
+                                            <input
+                                                type="email"
+                                                wire:model.live="responsable_email"
+                                                placeholder="Ej: responsable@gmail.com"
+                                                maxlength="30"
+                                                class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                                    {{ $errors->has('responsable_email')
+                                                        ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                        : ($responsable_email && !$errors->has('responsable_email')
+                                                            ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                            : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                            @if ($responsable_email && !$errors->has('responsable_email'))
+                                                <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @error('responsable_email')
+                                            <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                                <i class="fas fa-times-circle"></i> {{ $message }}
+                                            </span>
+                                        @enderror
+                                    </div>
+
                                 </div>
                             @else
                                 <div class="text-sm text-gray-500 flex items-center gap-2">
@@ -400,6 +464,10 @@
                                 <i class="fas fa-phone text-gray-300 text-xs"></i>
                                 <span class="text-gray-700 ml-1">{{ $paciente->telefono ?? '—' }}</span>
                             </span>
+                            <span class="text-sm text-gray-500 flex items-center gap-1">
+                                <i class="fas fa-envelope text-gray-300 text-xs"></i>
+                                <span class="text-gray-700 ml-1">{{ $paciente->email ?? '—' }}</span>
+                            </span>
 
                             @if ($paciente->responsable)
                                 <span class="text-sm text-gray-500 flex items-center gap-1">
@@ -409,6 +477,12 @@
                                         {{ $paciente->responsable->relacion ?? '' }}
                                     </span>
                                 </span>
+                                @if ($paciente->responsable->correo)
+                                    <span class="text-sm text-gray-500 flex items-center gap-1">
+                                        <i class="fas fa-envelope text-gray-300 text-xs"></i>
+                                        <span class="text-gray-600 ml-1">{{ $paciente->responsable->correo }}</span>
+                                    </span>
+                                @endif
                             @else
                                 <span class="text-sm text-gray-400 flex items-center gap-1">
                                     <i class="fas fa-user-shield text-gray-200 text-xs"></i>
