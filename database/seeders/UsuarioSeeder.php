@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class UsuarioSeeder extends Seeder
 {
@@ -28,7 +27,7 @@ class UsuarioSeeder extends Seeder
                 'password' => '123456789',
             ],
             [
-                'name' => 'chino resecinista',
+                'name' => 'Carla Bolaños',
                 'email' => 'resecinista@clinica.local',
                 'role' => 'recepcionista',
                 'active' => true,
@@ -49,4 +48,3 @@ class UsuarioSeeder extends Seeder
         }
     }
 }
-

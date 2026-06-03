@@ -71,17 +71,14 @@
 
                 <div class="flex items-center space-x-6">
                     @auth
-                        <!-- Botón Cerrar Sesión Visible -->
-                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                        <form method="POST" action="{{ route('logout') }}" class="m-0 p-0 inline-block">
                             @csrf
                             <button type="submit" onclick="return confirm('¿Estás seguro de cerrar sesión?')"
-                                class="flex items-center space-x-2 text-red-400 hover:text-red-500 transition">
+                                class="flex items-center space-x-2 text-red-400 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">
                                 <i class="fas fa-sign-out-alt"></i>
-                                <span class="text-sm font-medium">Cerrar Sesión</span>
+                                <span class="text-sm font-bold">Cerrar Sesión</span>
                             </button>
-                        </form>
-
-                        <!-- Dropdown Perfil -->
+                        </form> <!-- Dropdown Perfil -->
                         <div class="relative" x-data="{ open: false }">
                             <div @click="open = !open" class="flex items-center space-x-3 cursor-pointer select-none">
                                 <div class="text-right">
@@ -140,14 +137,6 @@
                                     <span class="text-sm">Pacientes</span>
                                 </a>
 
-
-
-                                <a href="{{ route('pacientes.historial') }}"
-                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.historial') ? 'active' : '' }}">
-                                    <i class="fas fa-notes-medical w-4 text-indigo-400"></i>
-                                    <span class="text-sm">Historial Clínico</span>
-                                </a>
-
                                 <a href="{{ route('medicos.solicitantes') }}"
                                     class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('medicos.solicitantes') ? 'active' : '' }}">
                                     <i class="fas fa-user-md w-4 text-indigo-400"></i>
@@ -156,22 +145,25 @@
                             @endif
 
 
-                            @if (in_array(Auth::user()->role, ['administrador', 'bioquimico']))
+                            @if (in_array(Auth::user()->role, ['bioquimico']))
                                 <a href="{{ route('laboratorio.panel') }}"
                                     class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('laboratorio.*') ? 'active' : '' }}">
                                     <i class="fas fa-microscope w-4 text-purple-400"></i>
                                     <span class="text-sm">Área de Laboratorio</span>
                                 </a>
-                            @endif
-
-                            @if (in_array(Auth::user()->role, ['administrador', 'bioquimico']))
-                                <a href="{{ route('cultivos') }}"
-                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('cultivos') ? 'active' : '' }}">
-                                    <i class="fas fa-flask w-4 text-green-400"></i>
-                                    <span class="text-sm">Gestión de Cultivos</span>
+                                <a href="{{ route('pacientes.historial') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.historial') ? 'active' : '' }}">
+                                    <i class="fas fa-notes-medical w-4 text-indigo-400"></i>
+                                    <span class="text-sm">Historial Clínico</span>
+                                </a>
+                                <a href="{{ route('admin.antibioticos') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('admin.antibioticos') ? 'active' : '' }}">
+                                    <i class="fas fa-pills w-4 mr-2 text-emerald-400"></i>
+                                    <span class="text-sm">Inventario de
+                                        Antibióticos
+                                    </span>
                                 </a>
                             @endif
-
                             <!-- ==================== DROPDOWN ADMINISTRACIÓN ==================== -->
                             @if (Auth::user()->role === 'administrador')
                                 <div class="relative" x-data="{ adminOpen: false }">
@@ -223,8 +215,8 @@
             @endauth
         </header>
 
-        <main class="flex-1 overflow-y-auto bg-white">
-            <div class="relative">
+        <main class="w-full h-full flex-1 overflow-y-auto bg-white">
+            <div class="relative w-full h-full min-h-screen">
                 {{ $slot }}
             </div>
         </main>

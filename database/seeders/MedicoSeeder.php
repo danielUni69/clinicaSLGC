@@ -9,21 +9,18 @@ class MedicoSeeder extends Seeder
 {
     public function run(): void
     {
-        MedicoSolicitante::updateOrCreate(
-            ['matricula_profesional' => 'MP-1025'],
-            [
-                'nombre_completo' => 'Dr. Roberto Ramos',
-                'especialidad' => 'Medicina General',
-            ]
-        );
+        MedicoSolicitante::create([
+            'nombre_completo' => 'Dr. Carlos Mendoza',
+            'especialidad' => 'Medicina General',
+            'matricula_profesional' => 'MG-12345',
+            'correo' => 'cmendoza@clinica.com',
+        ]);
 
-        MedicoSolicitante::updateOrCreate(
-            ['matricula_profesional' => 'MP-3048'],
-            [
-                'nombre_completo' => 'Dra. Elena Vargas',
-                'especialidad' => 'Urología',
-            ]
-        );
-
+        MedicoSolicitante::create([
+            'nombre_completo' => 'Dra. Elena Rojas',
+            'especialidad' => 'Urología',
+            'matricula_profesional' => 'UR-67890',
+            'correo' => 'erojas@clinica.com',
+        ]);
     }
 }

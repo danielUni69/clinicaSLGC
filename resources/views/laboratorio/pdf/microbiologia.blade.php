@@ -219,10 +219,19 @@
     @endforeach
 
     <div class="firma-box">
+        @php
+            // Obtenemos el bioquímico del primer cultivo disponible
+            $bioquimico = $cultivos->first()?->bioquimico;
+        @endphp
+
+        @if ($bioquimico)
+            <span style="font-size: 14px; text-transform: uppercase;">
+                <strong>{{ $bioquimico->name }}</strong>
+            </span><br>
+        @endif
         <strong>Firma del Bioquímico</strong><br>
         Sello de Laboratorio
     </div>
-
     <div class="footer">
         Documento generado electrónicamente por SGLC - Sistema de Gestión de Laboratorio Clínico.
     </div>

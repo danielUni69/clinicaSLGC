@@ -205,6 +205,16 @@
     <div class="clear"></div>
 
     <div class="firma-box">
+        @php
+            // Obtenemos el bioquímico del primer resultado disponible
+            $bioquimico = $servicio->resultados->first()?->bioquimico;
+        @endphp
+
+        @if ($bioquimico)
+            <span style="font-size: 14px; text-transform: uppercase;">
+                <strong>{{ $bioquimico->name }}</strong>
+            </span><br>
+        @endif
         <strong>Firma y Sello del Bioquímico</strong><br>
     </div>
 

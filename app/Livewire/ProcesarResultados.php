@@ -29,7 +29,7 @@ class ProcesarResultados extends Component
     // --- Variables para el Modal y Correos ---
     public $mostrarModalPreview = false;
 
-    public $tipo_email_paciente = 'paciente'; // Puede ser 'paciente' o 'responsable'
+    public $tipo_email_paciente = 'paciente';
 
     public $email_paciente = '';
 
@@ -64,11 +64,10 @@ class ProcesarResultados extends Component
             $this->email_medico = $medico ? $medico->correo : '';
         }
 
-        // Cargar parámetros a evaluar
+        // Cargar parámetros a evaluar (Excluyendo cultivos usando la nueva BD)
         foreach ($modeloServicio->tiposAnalisis as $analisis) {
-            $nombreCat = strtolower($analisis->categoria->nombre ?? '');
-            if (str_contains($nombreCat, 'microbiolog') || str_contains($nombreCat, 'cultivo')) {
-                continue;
+            if ($analisis->categoria && $analisis->categoria->es_cultivo) {
+                continue; // Saltamos los cultivos
             }
 
             $resultadoPrevio = ResultadoAnalisis::where('servicio_id', $modeloServicio->id)
@@ -161,6 +160,46 @@ class ProcesarResultados extends Component
         }
     }
 
+    // --- NUEVO MÉTODO: GUARDAR AVANCE PARCIAL ---
+    public function guardarAvanceParcial()
+    {
+        $this->validate([
+            'valores.*.valor' => 'nullable|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $this->guardarResultadosEnBD();
+
+            // Aseguramos que la orden quede "en proceso"
+            $this->servicio->update(['estado_muestra' => 'recolectada']);
+
+            DB::commit();
+            session()->flash('mensaje', 'Avance guardado correctamente. Puede regresar más tarde para completar los demás análisis.');
+
+            return redirect()->route('laboratorio.panel');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Error al guardar avance: '.$e->getMessage());
+        }
+    }
+
+    // --- MÉTODO AUXILIAR PARA NO REPETIR CÓDIGO ---
+    private function guardarResultadosEnBD()
+    {
+        foreach ($this->valores as $analisis_id => $data) {
+            $valorLimpio = trim($data['valor']);
+            if ($valorLimpio !== '') {
+                ResultadoAnalisis::updateOrCreate(
+                    ['servicio_id' => $this->servicio->id, 'tipo_analisis_id' => $analisis_id],
+                    ['valor_registrado' => $valorLimpio, 'alerta_rango' => $data['alerta'], 'bioquimico_id' => Auth::id() ?? 1]
+                );
+            } else {
+                ResultadoAnalisis::where('servicio_id', $this->servicio->id)->where('tipo_analisis_id', $analisis_id)->delete();
+            }
+        }
+    }
+
     public function previsualizarResultados()
     {
         $this->validate([
@@ -171,8 +210,9 @@ class ProcesarResultados extends Component
             return trim($item['valor']) !== '';
         });
 
-        if (empty($this->resultados_a_previsualizar)) {
-            session()->flash('error', 'Debe llenar al menos un resultado para previsualizar.');
+        // REGLA ESTRICTA: Para previsualizar y firmar, TODO debe estar lleno.
+        if (count($this->resultados_a_previsualizar) < count($this->valores)) {
+            session()->flash('error', 'Faltan resultados por transcribir. Si desea continuar luego, use el botón "Guardar Avance". Para Finalizar, debe llenar todos los campos.');
 
             return;
         }
@@ -183,7 +223,7 @@ class ProcesarResultados extends Component
     public function cerrarModal()
     {
         $this->mostrarModalPreview = false;
-        session()->forget('error_email'); // Limpiar error visual
+        session()->forget('error_email');
     }
 
     public function confirmarYEnviar()
@@ -193,9 +233,8 @@ class ProcesarResultados extends Component
             'email_medico' => 'nullable|email|max:255',
         ]);
 
-        // REGLA DE ORO: No puede finalizar si todos los correos están vacíos
         if (empty(trim($this->email_paciente)) && empty(trim($this->email_medico))) {
-            session()->flash('error_email', 'Debe asignar obligatoriamente al menos un correo (Paciente/Responsable o Médico) para enviar los resultados.');
+            session()->flash('error_email', 'Debe asignar obligatoriamente al menos un correo (Paciente/Responsable o Médico) para enviar el PDF.');
 
             return;
         }
@@ -203,9 +242,8 @@ class ProcesarResultados extends Component
         DB::beginTransaction();
 
         try {
-            // Actualizar correos en la base de datos
+            // Actualizar correos en BD
             $paciente = $this->servicio->paciente;
-
             if ($this->tipo_email_paciente === 'responsable' && $paciente->responsable_id) {
                 Responsable::where('id', $paciente->responsable_id)->update(['correo' => $this->email_paciente]);
             } else {
@@ -216,52 +254,30 @@ class ProcesarResultados extends Component
                 MedicoSolicitante::where('id', $this->servicio->medico_id)->update(['correo' => $this->email_medico]);
             }
 
-            // Registrar los resultados transcritos
-            foreach ($this->valores as $analisis_id => $data) {
-                $valorLimpio = trim($data['valor']);
-                if ($valorLimpio !== '') {
-                    ResultadoAnalisis::updateOrCreate(
-                        ['servicio_id' => $this->servicio->id, 'tipo_analisis_id' => $analisis_id],
-                        ['valor_registrado' => $valorLimpio, 'alerta_rango' => $data['alerta'], 'bioquimico_id' => Auth::id() ?? 1]
-                    );
-                } else {
-                    ResultadoAnalisis::where('servicio_id', $this->servicio->id)->where('tipo_analisis_id', $analisis_id)->delete();
-                }
-            }
+            // Guardar resultados en BD
+            $this->guardarResultadosEnBD();
 
-            // Comprobar estado del Kanban
-            $analisisRutinaIds = $this->servicio->tiposAnalisis()->whereDoesntHave('categoria', function ($q) {
-                $q->where('nombre', 'like', '%microbiolog%')->orWhere('nombre', 'like', '%cultivo%');
-            })->pluck('tipos_analisis.id');
-
-            $resultadosCompletados = ResultadoAnalisis::where('servicio_id', $this->servicio->id)
-                ->whereIn('tipo_analisis_id', $analisisRutinaIds)->count();
-
-            $rutinaCompletada = ($resultadosCompletados === $analisisRutinaIds->count());
-
-            $tieneCultivos = $this->servicio->tiposAnalisis()->whereHas('categoria', function ($q) {
-                $q->where('nombre', 'like', '%microbiolog%')->orWhere('nombre', 'like', '%cultivo%');
-            })->exists();
+            // Comprobar estado final del Kanban usando la nueva lógica
+            $tieneCultivos = $this->servicio->tiposAnalisis->contains(function ($a) {
+                return $a->categoria && $a->categoria->es_cultivo;
+            });
 
             $estado_final = 'recolectada';
-
-            if ($rutinaCompletada && ! $tieneCultivos) {
+            if (! $tieneCultivos) {
                 $estado_final = 'completada';
-                $mensajeExito = 'Orden FINALIZADA con éxito.';
+                $mensajeExito = 'Orden FINALIZADA con éxito y firmada digitalmente.';
             } else {
-                $mensajeExito = 'Guardado parcial. La orden sigue EN PROCESO.';
+                $mensajeExito = 'Pruebas Clínicas finalizadas. La orden sigue EN PROCESO esperando el resultado de Microbiología.';
             }
 
             $this->servicio->update([
                 'estado_muestra' => $estado_final,
             ]);
 
-            // Enviar Correo a la lista de destinatarios
+            // Enviar Correo si finalizó
             if ($estado_final === 'completada') {
-                // Recalcular destinatarios desde BD para no depender del estado del formulario
                 $destinatarios = [];
 
-                $paciente = $this->servicio->paciente;
                 if ($paciente) {
                     if ($paciente->responsable_id) {
                         $correoResp = Responsable::where('id', $paciente->responsable_id)->value('correo');
@@ -269,10 +285,8 @@ class ProcesarResultados extends Component
                             $destinatarios[] = $correoResp;
                         }
                     }
-
-                    $correoPac = $paciente->email;
-                    if ($correoPac) {
-                        $destinatarios[] = $correoPac;
+                    if ($paciente->email) {
+                        $destinatarios[] = $paciente->email;
                     }
                 }
 
@@ -283,7 +297,6 @@ class ProcesarResultados extends Component
                     }
                 }
 
-                // Quitar vacíos y duplicados
                 $destinatarios = array_values(array_unique(array_filter($destinatarios)));
 
                 if (count($destinatarios) > 0) {
@@ -293,7 +306,6 @@ class ProcesarResultados extends Component
                     $mensajeExito .= ' La orden está completada, pero no se encontró correo para enviar.';
                 }
             }
-
 
             DB::commit();
             session()->flash('mensaje', $mensajeExito);

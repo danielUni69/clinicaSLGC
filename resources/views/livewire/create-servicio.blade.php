@@ -1,36 +1,48 @@
 <div class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
-    <div class="mb-8">
+    <div class="">
         <h1 class="text-2xl font-black text-slate-800 flex items-center gap-3 uppercase tracking-wide">
             <i class="fas fa-cash-register text-blue-700"></i> Punto de Recepción y Caja
         </h1>
     </div>
 
-    @if (session()->has('mensaje'))
-        <div
-            class="mb-8 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl shadow-sm flex items-center gap-3 animate-[pulse_2s_ease-in-out_3]">
-            <div class="bg-emerald-500 text-white p-1.5 rounded-full flex items-center justify-center shadow-sm">
-                <i class="fas fa-check text-sm"></i>
+    <div class="flex flex-col gap-3 mb-8">
+        @if (session()->has('mensaje') && trim((string) session('mensaje')) !== '')
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.opacity.duration.500ms
+                class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl shadow-sm flex items-center justify-between gap-3 animate-[pulse_2s_ease-in-out_3]">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="bg-emerald-500 text-white p-1.5 rounded-full flex items-center justify-center shadow-sm shrink-0">
+                        <i class="fas fa-check text-sm"></i>
+                    </div>
+                    <span class="text-sm font-semibold">{{ session('mensaje') }}</span>
+                </div>
+                <button @click="show = false" type="button"
+                    class="text-emerald-500 hover:text-emerald-700 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <span class="text-sm font-semibold">{{ session('mensaje') }}</span>
-        </div>
-    @endif
+        @endif
 
-    @if (session()->has('error'))
-        <div
-            class="mb-8 bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-2xl shadow-sm flex items-center gap-3">
-            <div class="bg-red-500 text-white p-1.5 rounded-full flex items-center justify-center shadow-sm">
-                <i class="fas fa-exclamation-triangle text-sm"></i>
+        @if (session()->has('error') && trim((string) session('error')) !== '')
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" x-transition.opacity.duration.500ms
+                class="bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-2xl shadow-sm flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="bg-red-500 text-white p-1.5 rounded-full flex items-center justify-center shadow-sm shrink-0">
+                        <i class="fas fa-exclamation-triangle text-sm"></i>
+                    </div>
+                    <span class="text-sm font-semibold">{{ session('error') }}</span>
+                </div>
+                <button @click="show = false" type="button" class="text-red-500 hover:text-red-700 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <span class="text-sm font-semibold">{{ session('error') }}</span>
-        </div>
-    @endif
+        @endif
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-        <!-- COLUMNA IZQUIERDA: DATOS Y CATÁLOGO -->
         <div class="lg:col-span-8 space-y-6">
 
-            <!-- 1. IDENTIFICACIÓN DEL PACIENTE -->
             <div class="bg-white shadow-sm rounded-2xl p-6 border border-slate-200 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
 
@@ -85,7 +97,6 @@
                             </div>
                         </div>
 
-                        <!-- CAMPO DE CORREO DEL PACIENTE -->
                         <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
                             <label class="block text-xs font-bold text-slate-500 mb-1">
                                 Correo del Paciente
@@ -110,7 +121,6 @@
                         </div>
                     </div>
 
-                    <!-- DATOS DEL RESPONSABLE -->
                     <div
                         class="mt-6 bg-slate-50 p-5 rounded-xl border {{ $es_menor ? 'border-amber-200 shadow-sm bg-amber-50/30' : 'border-slate-200' }}">
                         <div class="flex items-center justify-between mb-4">
@@ -163,8 +173,8 @@
                                         <span class="text-red-500">*</span>
                                     @endif
                                 </label>
-                                <input type="text" wire:model="responsable_relacion" placeholder="Ej. Padre, Madre"
-                                    {{ !$editar_responsable ? 'disabled' : '' }}
+                                <input type="text" wire:model="responsable_relacion"
+                                    placeholder="Ej. Padre, Madre" {{ !$editar_responsable ? 'disabled' : '' }}
                                     class="w-full p-2.5 text-sm rounded-lg border transition-colors {{ !$editar_responsable ? 'bg-slate-200 border-transparent text-slate-500 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-900 focus:ring-blue-500 focus:border-blue-500' }}">
                                 @error('responsable_relacion')
                                     <span class="text-red-500 text-[10px] mt-1 block font-bold">{{ $message }}</span>
@@ -202,7 +212,6 @@
                 @enderror
             </div>
 
-            <!-- 2. ORDEN MÉDICA Y ANÁLISIS -->
             <div class="bg-white shadow-sm rounded-2xl p-6 border border-slate-200 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
 
@@ -284,7 +293,6 @@
 
         </div>
 
-        <!-- COLUMNA DERECHA: CAJA Y CARRITO -->
         <div class="lg:col-span-4">
             <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-6 border border-slate-200">
                 <h2
@@ -346,7 +354,6 @@
                     </div>
                 </div>
 
-                <!-- PANEL DE COBRO -->
                 <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-inner mt-2 border border-slate-800">
 
                     <div class="flex justify-between items-end mb-5 border-b border-slate-700 pb-4">

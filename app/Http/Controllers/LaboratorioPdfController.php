@@ -10,12 +10,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class LaboratorioPdfController extends Controller
 {
     // 1. PDF DE RUTINA
+    // 1. PDF DE RUTINA
     public function descargar($id)
     {
-        // CORRECCIÓN 1: Cargamos 'tiposAnalisis' y 'resultados' como relaciones separadas del Servicio
-        $servicio = Servicio::with(['paciente', 'tiposAnalisis', 'resultados'])->findOrFail($id);
+        // Añadimos 'resultados.bioquimico' para traer al usuario que registró el resultado
+        $servicio = Servicio::with(['paciente', 'tiposAnalisis', 'resultados.bioquimico'])->findOrFail($id);
 
-        // CORRECCIÓN 2: Apuntamos a la carpeta exacta según tu terminal
         $pdf = Pdf::loadView('laboratorio.pdf.resultados', compact('servicio'));
 
         return $pdf->stream('Resultados_Clinicos_'.$servicio->codigo_unico.'.pdf');
@@ -26,7 +26,8 @@ class LaboratorioPdfController extends Controller
     {
         $servicio = Servicio::with(['paciente', 'tiposAnalisis.categoria'])->findOrFail($id);
 
-        $cultivos = Cultivo::with('tipoAnalisis')->where('servicio_id', $id)->get();
+        // Añadimos 'bioquimico' para traer al usuario que registró el cultivo
+        $cultivos = Cultivo::with(['tipoAnalisis', 'bioquimico'])->where('servicio_id', $id)->get();
 
         foreach ($cultivos as $cultivo) {
             if ($cultivo->estado_cultivo === 'positivo_identificado') {
@@ -38,7 +39,6 @@ class LaboratorioPdfController extends Controller
             }
         }
 
-        // CORRECCIÓN 2: Apuntamos a la carpeta exacta según tu terminal
         $pdf = Pdf::loadView('laboratorio.pdf.microbiologia', compact('servicio', 'cultivos'));
 
         $pdf->setPaper('A4', 'portrait');

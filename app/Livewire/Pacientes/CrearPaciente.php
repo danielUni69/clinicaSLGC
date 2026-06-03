@@ -10,15 +10,22 @@ class CrearPaciente extends Component
 {
     // Paciente
     public string $ci = '';
+
     public string $nombre_completo = '';
+
     public string $fecha_nacimiento = '';
+
     public string $sexo = 'M';
+
     public ?string $telefono = null;
 
     // Responsable (opcional)
     public bool $tiene_responsable = false;
+
     public string $responsable_nombre = '';
+
     public ?string $responsable_celular = null;
+
     public string $responsable_relacion = 'Familiar';
 
     protected function rules(): array
@@ -41,7 +48,7 @@ class CrearPaciente extends Component
         $validated = $this->validate();
 
         $responsableId = null;
-        if (!empty($validated['tiene_responsable']) && trim($validated['responsable_nombre']) !== '') {
+        if (! empty($validated['tiene_responsable']) && trim($validated['responsable_nombre']) !== '') {
             $responsable = Responsable::create([
                 'nombre_completo' => $validated['responsable_nombre'],
                 'celular' => $validated['responsable_celular'] ?? 'Sin registro',
@@ -78,5 +85,3 @@ class CrearPaciente extends Component
         return view('livewire.pacientes.crear.paciente');
     }
 }
-
-
