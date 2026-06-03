@@ -151,6 +151,11 @@
                                     <i class="fas fa-microscope w-4 text-purple-400"></i>
                                     <span class="text-sm">Área de Laboratorio</span>
                                 </a>
+                                <a href="{{ route('admin.catalogo') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('admin.catalogo') ? 'active' : '' }}">
+                                    <i class="fas fa-vials w-4 mr-2 text-blue-400"></i>
+                                    <span class="text-sm">Catálogo de Exámenes</span>
+                                </a>
                                 <a href="{{ route('pacientes.historial') }}"
                                     class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.historial') ? 'active' : '' }}">
                                     <i class="fas fa-notes-medical w-4 text-indigo-400"></i>

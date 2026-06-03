@@ -50,6 +50,8 @@ Route::middleware(['auth'])->group(function () {
 
     // LABORATORIO
     Route::middleware(['role.bioquimico'])->group(function () {
+
+        Route::get('/administracion/catalogo', CatalogoAnalisis::class)->name('admin.catalogo');
         Route::get('/laboratorio', PanelLaboratorio::class)->name('laboratorio.panel');
         Route::get('/laboratorio/procesar/{id}', ProcesarResultados::class)->name('laboratorio.procesar');
         Route::get('/laboratorio/cultivo/{id}', ProcesarCultivo::class)->name('laboratorio.cultivo');
@@ -61,7 +63,6 @@ Route::middleware(['auth'])->group(function () {
 
     // ADMINISTRACIÓN
     Route::middleware(['role.admin'])->group(function () {
-        Route::get('/administracion/catalogo', CatalogoAnalisis::class)->name('admin.catalogo');
         Route::get('/administracion/usuarios', UsersList::class)->name('admin.users.list');
         Route::get('/administracion/reportes', ReportePacientes::class)->name('reportes.index');
     });
