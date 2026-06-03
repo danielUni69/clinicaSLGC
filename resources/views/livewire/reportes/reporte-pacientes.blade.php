@@ -12,7 +12,11 @@
         Genere reportes del sistema filtrando por rango de fechas.
     </p>
 </div>
-
+@if (session()->has('warning'))
+    <div class="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+        {{ session('warning') }}
+    </div>
+@endif
 {{-- Filtros --}}
 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
@@ -43,7 +47,7 @@
             <input
                 type="date"
                 wire:model="fechaInicio"
-                max="{{ now()->format('Y-m-d') }}"
+                max="{{ $fechaFin }}"
                 class="w-full border-gray-300 rounded-lg">
         </div>
 
@@ -52,11 +56,12 @@
                 Fecha Fin
             </label>
 
-            <input
-                type="date"
-                wire:model="fechaFin"
-                max="{{ now()->format('Y-m-d') }}"
-                class="w-full border-gray-300 rounded-lg">
+                <input
+                    type="date"
+                    wire:model="fechaFin"
+                    min="{{ $fechaInicio }}"
+                    max="{{ now()->format('Y-m-d') }}"
+                    class="w-full border-gray-300 rounded-lg">
         </div>
 
         <div class="flex items-end">
