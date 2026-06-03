@@ -2,77 +2,199 @@
 
 namespace App\Livewire\Turnos;
 
-use App\Models\TurnoDomingoFeriado;
-use App\Models\User;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\TurnoDomingoFeriado;
+use App\Models\User;
+use Carbon\Carbon;
 
 class Turnos extends Component
 {
     use WithPagination;
 
-    public string $fecha = '';
-    public ?int $user_id = null;
+    // Tabs
+    public $activeTab = 'calendar';
 
-    public string $search = '';
+    // Calendario
+    public $calYear;
+    public $calMonth;
+    public $allTurnos = [];   // Cambiado a array simple
 
-    protected function rules(): array
+    // Formulario asignar turno
+    public $user_id;
+    public $fecha;
+
+    // Lista de turnos
+    public $search = '';
+    public $filterTipo = '';
+
+    // Feriados
+    public $newFeriadoNombre;
+    public $newFeriadoFecha;
+
+    // Datos
+    public $users = [];
+    public $feriados = [];
+    public $feriadosBase = [];
+    public $turnosCounts = [];
+
+    public function mount()
     {
-        return [
-            'user_id' => [
-                'required',
-                'integer',
-                Rule::exists('users', 'id'),
-            ],
-            'fecha' => ['required', 'date'],
+        $this->calYear  = now()->year;
+        $this->calMonth = now()->month - 1;
+
+        $this->loadUsers();
+        $this->loadFeriados();
+        $this->loadTurnos();
+        $this->loadTurnosCounts();
+    }
+
+    public function loadUsers()
+    {
+        $this->users = User::where('active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function loadFeriados()
+    {
+        $this->feriadosBase = [
+            '01-01' => 'Año Nuevo',
+            '02-22' => 'Carnaval',
+            '03-23' => 'Día del Mar',
+            '04-01' => 'Viernes Santo',
+            '05-01' => 'Día del Trabajo',
+            '06-21' => 'Año Nuevo Aymara',
+            '08-06' => 'Independencia',
+            '11-02' => 'Día de los Difuntos',
+            '12-25' => 'Navidad',
         ];
+
+        $this->feriados = $this->feriadosBase;
     }
 
-    public function updatingSearch(): void
+    public function loadTurnos()
     {
-        $this->resetPage();
+        $turnos = TurnoDomingoFeriado::with('user')
+            ->whereYear('fecha', $this->calYear)
+            ->whereMonth('fecha', $this->calMonth + 1)
+            ->get();
+
+        // Convertimos a array simple para Livewire
+        $this->allTurnos = [];
+        foreach ($turnos as $t) {
+            $fecha = $t->fecha->format('Y-m-d');
+            $this->allTurnos[$fecha][] = $t;
+        }
     }
 
-    public function guardar(): void
+    public function loadTurnosCounts()
     {
-        $validated = $this->validate();
+        $this->turnosCounts = TurnoDomingoFeriado::selectRaw('user_id, COUNT(*) as total')
+            ->groupBy('user_id')
+            ->pluck('total', 'user_id')
+            ->toArray();
+    }
 
-        TurnoDomingoFeriado::create([
-            'user_id' => $validated['user_id'],
-            'fecha' => $validated['fecha'],
+    public function prevMonth()
+    {
+        $this->calMonth--;
+        if ($this->calMonth < 0) {
+            $this->calMonth = 11;
+            $this->calYear--;
+        }
+        $this->loadTurnos();
+    }
+
+    public function nextMonth()
+    {
+        $this->calMonth++;
+        if ($this->calMonth > 11) {
+            $this->calMonth = 0;
+            $this->calYear++;
+        }
+        $this->loadTurnos();
+    }
+
+    public function isFeriado($fecha)
+    {
+        $md = Carbon::parse($fecha)->format('m-d');
+        return array_key_exists($md, $this->feriados);
+    }
+
+    public function isFinde($fecha)
+    {
+        $dow = Carbon::parse($fecha)->dayOfWeek;
+        return $dow === 0 || $dow === 6;
+    }
+
+    public function getMood($count)
+    {
+        if ($count <= 2) return 'happy';
+        if ($count <= 5) return 'mid';
+        return 'sad';
+    }
+
+    public function getMoodLabel($count)
+    {
+        if ($count === 0) return ['txt' => 'Disponible', 'color' => 'text-green-600'];
+        if ($count <= 2) return ['txt' => 'Descansado', 'color' => 'text-green-600'];
+        if ($count <= 5) return ['txt' => 'Cargado', 'color' => 'text-amber-600'];
+        return ['txt' => 'Agotado', 'color' => 'text-red-600'];
+    }
+
+    public function guardar()
+    {
+        $this->validate([
+            'user_id' => 'required|exists:users,id',
+            'fecha'   => 'required|date',
         ]);
 
-        $this->reset(['fecha', 'user_id']);
-        $this->dispatch('notify', type: 'success', message: 'Turno guardado.');
+        // Evitar duplicados
+        $existe = TurnoDomingoFeriado::where('user_id', $this->user_id)
+                    ->where('fecha', $this->fecha)
+                    ->exists();
+
+        if ($existe) {
+            $this->dispatch('notify', type: 'error', message: 'Este usuario ya tiene turno ese día');
+            return;
+        }
+
+        TurnoDomingoFeriado::create([
+            'user_id' => $this->user_id,
+            'fecha'   => $this->fecha,
+        ]);
+
+        $this->loadTurnos();
+        $this->loadTurnosCounts();
+        $this->reset('user_id');
+
+        $this->dispatch('notify', type: 'success', message: 'Turno asignado correctamente');
+    }
+
+    public function eliminar($id)
+    {
+        TurnoDomingoFeriado::destroy($id);
+        $this->loadTurnos();
+        $this->loadTurnosCounts();
+        $this->dispatch('notify', type: 'success', message: 'Turno eliminado');
     }
 
     public function render()
     {
-        $users = User::query()
-            // Recepción puede registrar turnos para bioquímicos y/o recepcionistas (pero no admin)
-            ->where('role', '!=', 'administrador')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role']);
-
-
-        $turnos = TurnoDomingoFeriado::query()
-            ->with('bioquimico')
-            ->when(trim($this->search) !== '', function ($q) {
-                $term = trim($this->search);
-                $q->whereHas('bioquimico', function ($qq) use ($term) {
-                    $qq->where('name', 'like', "%{$term}%")
-                        ->orWhere('email', 'like', "%{$term}%")
-                        ->orWhere('role', 'like', "%{$term}%");
-                });
+        $turnos = TurnoDomingoFeriado::with('user')
+            ->when($this->search, function($q) {
+                $q->whereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%"));
             })
-            ->orderByDesc('id')
-            ->paginate(10);
+            ->orderBy('fecha', 'desc')
+            ->paginate(15);
 
         return view('livewire.turnos.turnos', [
-            'users' => $users,
             'turnos' => $turnos,
+            'users'  => $this->users,
+            'feriados' => $this->feriados,
+            'feriadosBase' => $this->feriadosBase,
+            'turnosCounts' => $this->turnosCounts,
         ]);
     }
 }
-

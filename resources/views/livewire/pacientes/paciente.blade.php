@@ -46,12 +46,10 @@
             <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" wire:click="cancelarFormulario"></div>
 
             {{-- panel --}}
-            <div
-                class="relative w-full max-w-3xl mx-4 bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
+            <div class="relative w-full max-w-3xl mx-4 bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
                 <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <span
-                            class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold bg-blue-100 text-blue-700">
+                        <span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold bg-blue-100 text-blue-700">
                             <i class="fas {{ $modo === 'editar' ? 'fa-user-edit' : 'fa-user-plus' }}"></i>
                         </span>
                         {{ $modo === 'editar' ? 'Editar Paciente' : 'Nuevo Paciente' }}
@@ -66,63 +64,147 @@
                 <div class="p-6">
                     <form wire:submit.prevent="guardar" class="space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                            {{-- CI --}}
                             <div>
-                                <label
-                                    class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">CI</label>
-                                <input type="text" wire:model="ci"
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                    CI
+                                    <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">12345678 LP</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        wire:model.live="ci"
+                                        placeholder="12345678 LP"
+                                        maxlength="11"
+                                        class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                            {{ $errors->has('ci')
+                                                ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                : ($ci && !$errors->has('ci') && preg_match('/^\d{8}( [A-Z]{1,2})?$/', $ci)
+                                                    ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                    : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                    @if ($ci && !$errors->has('ci') && preg_match('/^\d{8}( [A-Z]{1,2})?$/', $ci))
+                                        <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    @endif
+                                </div>
                                 @error('ci')
-                                    <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i>
-                                        {{ $message }}</span>
+                                    <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                        <i class="fas fa-times-circle"></i> {{ $message }}
+                                    </span>
                                 @enderror
+                                <p class="text-xs text-gray-400 mt-1">8 dígitos. Letras de departamento opcionales (ej: 12345678 LP)</p>
                             </div>
 
+                            {{-- Nombre Completo --}}
                             <div class="md:col-span-2">
-                                <label
-                                    class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nombre
-                                    Completo</label>
-                                <input type="text" wire:model="nombre_completo"
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                    Nombre Completo
+                                    <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">máx. 30 letras</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        wire:model.live="nombre_completo"
+                                        placeholder="Solo letras y espacios"
+                                        maxlength="30"
+                                        class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-16 transition-colors focus:ring-2 focus:outline-none
+                                            {{ $errors->has('nombre_completo')
+                                                ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                : (strlen(trim($nombre_completo)) >= 3 && !$errors->has('nombre_completo')
+                                                    ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                    : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                    <span class="absolute inset-y-0 right-2 flex items-center gap-1 pointer-events-none">
+                                        @if (strlen(trim($nombre_completo)) >= 3 && !$errors->has('nombre_completo'))
+                                            <i class="fas fa-check-circle text-green-500"></i>
+                                        @endif
+                                        <span class="text-xs {{ strlen($nombre_completo) >= 28 ? 'text-orange-400 font-bold' : 'text-gray-400' }}">
+                                            {{ strlen($nombre_completo) }}/30
+                                        </span>
+                                    </span>
+                                </div>
                                 @error('nombre_completo')
-                                    <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i>
-                                        {{ $message }}</span>
+                                    <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                        <i class="fas fa-times-circle"></i> {{ $message }}
+                                    </span>
                                 @enderror
                             </div>
 
+                            {{-- Fecha de Nacimiento --}}
                             <div>
-                                <label
-                                    class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Fecha
-                                    de Nacimiento</label>
-                                <input type="date" wire:model="fecha_nacimiento"
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                    Fecha de Nacimiento
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="date"
+                                        wire:model.live="fecha_nacimiento"
+                                        max="{{ now()->subDay()->format('Y-m-d') }}"
+                                        min="1900-01-01"
+                                        class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                            {{ $errors->has('fecha_nacimiento')
+                                                ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                : ($fecha_nacimiento && !$errors->has('fecha_nacimiento')
+                                                    ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                    : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                    @if ($fecha_nacimiento && !$errors->has('fecha_nacimiento'))
+                                        <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    @endif
+                                </div>
                                 @error('fecha_nacimiento')
-                                    <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i>
-                                        {{ $message }}</span>
+                                    <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                        <i class="fas fa-times-circle"></i> {{ $message }}
+                                    </span>
                                 @enderror
+                                <p class="text-xs text-gray-400 mt-1">No puede ser hoy ni una fecha futura</p>
                             </div>
 
+                            {{-- Sexo --}}
                             <div>
-                                <label
-                                    class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Sexo</label>
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Sexo</label>
                                 <select wire:model="sexo"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
                                     <option value="M">Masculino</option>
                                     <option value="F">Femenino</option>
                                 </select>
                                 @error('sexo')
-                                    <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i>
-                                        {{ $message }}</span>
+                                    <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                        <i class="fas fa-times-circle"></i> {{ $message }}
+                                    </span>
                                 @enderror
                             </div>
 
+                            {{-- Teléfono --}}
                             <div>
-                                <label
-                                    class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Teléfono</label>
-                                <input type="text" wire:model="telefono"
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                    Teléfono
+                                    <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">máx. 8 dígitos</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        wire:model.live="telefono"
+                                        placeholder="Ej: 71234567"
+                                        maxlength="8"
+                                        class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                            {{ $errors->has('telefono')
+                                                ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                : ($telefono && strlen($telefono) >= 7 && !$errors->has('telefono')
+                                                    ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                    : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                    @if ($telefono && strlen($telefono) >= 7 && !$errors->has('telefono'))
+                                        <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    @endif
+                                </div>
                                 @error('telefono')
-                                    <span class="text-red-500 text-xs mt-1 block"><i class="fas fa-times-circle"></i>
-                                        {{ $message }}</span>
+                                    <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                        <i class="fas fa-times-circle"></i> {{ $message }}
+                                    </span>
                                 @enderror
                             </div>
                         </div>
@@ -133,8 +215,7 @@
                                 <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
                                     <i class="fas fa-user-shield text-gray-400"></i>
                                     Responsable / Tutor
-                                    <span
-                                        class="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Opcional</span>
+                                    <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Opcional</span>
                                 </h3>
 
                                 <div class="mt-2">
@@ -152,41 +233,100 @@
                                         </button>
                                     @endif
                                 </div>
-
                             </div>
 
                             @if ($tiene_responsable)
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                                    {{-- Nombre Responsable --}}
                                     <div class="md:col-span-1">
-                                        <label
-                                            class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nombre</label>
-                                        <input type="text" wire:model="responsable_nombre"
-                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                            Nombre
+                                            <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">máx. 30</span>
+                                        </label>
+                                        <div class="relative">
+                                            <input
+                                                type="text"
+                                                wire:model.live="responsable_nombre"
+                                                placeholder="Solo letras y espacios"
+                                                maxlength="30"
+                                                class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-16 transition-colors focus:ring-2 focus:outline-none
+                                                    {{ $errors->has('responsable_nombre')
+                                                        ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                        : (strlen(trim($responsable_nombre)) >= 3 && !$errors->has('responsable_nombre')
+                                                            ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                            : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                            <span class="absolute inset-y-0 right-2 flex items-center gap-1 pointer-events-none">
+                                                @if (strlen(trim($responsable_nombre)) >= 3 && !$errors->has('responsable_nombre'))
+                                                    <i class="fas fa-check-circle text-green-500"></i>
+                                                @endif
+                                                <span class="text-xs {{ strlen($responsable_nombre) >= 28 ? 'text-orange-400 font-bold' : 'text-gray-400' }}">
+                                                    {{ strlen($responsable_nombre) }}/30
+                                                </span>
+                                            </span>
+                                        </div>
                                         @error('responsable_nombre')
-                                            <span class="text-red-500 text-xs mt-1 block"><i
-                                                    class="fas fa-times-circle"></i> {{ $message }}</span>
+                                            <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                                <i class="fas fa-times-circle"></i> {{ $message }}
+                                            </span>
                                         @enderror
                                     </div>
 
+                                    {{-- Celular Responsable --}}
                                     <div>
-                                        <label
-                                            class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Celular</label>
-                                        <input type="text" wire:model="responsable_celular"
-                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                                            Celular
+                                            <span class="text-gray-400 font-normal normal-case tracking-normal ml-1">máx. 8 dígitos</span>
+                                        </label>
+                                        <div class="relative">
+                                            <input
+                                                type="text"
+                                                wire:model.live="responsable_celular"
+                                                placeholder="Ej: 71234567"
+                                                maxlength="8"
+                                                class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                                    {{ $errors->has('responsable_celular')
+                                                        ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                        : ($responsable_celular && strlen($responsable_celular) >= 7 && !$errors->has('responsable_celular')
+                                                            ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                            : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                            @if ($responsable_celular && strlen($responsable_celular) >= 7 && !$errors->has('responsable_celular'))
+                                                <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                            @endif
+                                        </div>
                                         @error('responsable_celular')
-                                            <span class="text-red-500 text-xs mt-1 block"><i
-                                                    class="fas fa-times-circle"></i> {{ $message }}</span>
+                                            <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                                <i class="fas fa-times-circle"></i> {{ $message }}
+                                            </span>
                                         @enderror
                                     </div>
 
+                                    {{-- Relación --}}
                                     <div>
-                                        <label
-                                            class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Relación</label>
-                                        <input type="text" wire:model="responsable_relacion"
-                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Relación</label>
+                                        <div class="relative">
+                                            <input
+                                                type="text"
+                                                wire:model.live="responsable_relacion"
+                                                placeholder="Ej: Familiar, Tutor"
+                                                class="border text-gray-900 text-sm rounded-lg block w-full p-2 pr-8 transition-colors focus:ring-2 focus:outline-none
+                                                    {{ $errors->has('responsable_relacion')
+                                                        ? 'bg-red-50 border-red-400 focus:ring-red-200 focus:border-red-400'
+                                                        : (strlen(trim($responsable_relacion)) >= 2 && !$errors->has('responsable_relacion')
+                                                            ? 'bg-green-50 border-green-400 focus:ring-green-200 focus:border-green-400'
+                                                            : 'bg-white border-gray-300 focus:ring-blue-200 focus:border-blue-400') }}">
+                                            @if (strlen(trim($responsable_relacion)) >= 2 && !$errors->has('responsable_relacion'))
+                                                <span class="absolute inset-y-0 right-2 flex items-center text-green-500 pointer-events-none">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                            @endif
+                                        </div>
                                         @error('responsable_relacion')
-                                            <span class="text-red-500 text-xs mt-1 block"><i
-                                                    class="fas fa-times-circle"></i> {{ $message }}</span>
+                                            <span class="text-red-500 text-xs mt-1 block flex items-center gap-1">
+                                                <i class="fas fa-times-circle"></i> {{ $message }}
+                                            </span>
                                         @enderror
                                     </div>
                                 </div>
@@ -240,8 +380,7 @@
             <div class="px-6 py-4 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors">
                 <div class="flex items-center gap-4">
                     {{-- Avatar --}}
-                    <div
-                        class="w-11 h-11 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">
+                    <div class="w-11 h-11 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">
                         {{ strtoupper(substr($paciente->nombre_completo, 0, 1)) }}{{ strtoupper(substr(strrchr($paciente->nombre_completo, ' '), 1, 1)) }}
                     </div>
 
@@ -265,10 +404,8 @@
                             @if ($paciente->responsable)
                                 <span class="text-sm text-gray-500 flex items-center gap-1">
                                     <i class="fas fa-user-shield text-gray-300 text-xs"></i>
-                                    <span
-                                        class="text-gray-600 ml-1">{{ $paciente->responsable->nombre_completo }}</span>
-                                    <span
-                                        class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
+                                    <span class="text-gray-600 ml-1">{{ $paciente->responsable->nombre_completo }}</span>
+                                    <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
                                         {{ $paciente->responsable->relacion ?? '' }}
                                     </span>
                                 </span>
@@ -313,8 +450,7 @@
         @empty
             <div class="flex flex-col items-center justify-center py-16 text-gray-400">
                 <i class="fas fa-user-slash text-4xl mb-3 opacity-20"></i>
-                <p class="text-sm text-center">No se encontraron pacientes.<br>Intente con otro término de búsqueda.
-                </p>
+                <p class="text-sm text-center">No se encontraron pacientes.<br>Intente con otro término de búsqueda.</p>
             </div>
         @endforelse
 

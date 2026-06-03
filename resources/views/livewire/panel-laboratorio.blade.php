@@ -1,7 +1,7 @@
 <div class="max-w-[1600px] mx-auto py-8 sm:px-6 lg:px-8">
 
 
-    @if (session()->has('mensaje'))
+    @if (session()->has('mensaje') && trim((string) session('mensaje')) !== '')
         <div
             class="mb-8 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl shadow-sm flex items-center gap-3 animate-[pulse_2s_ease-in-out_3]">
             <div class="bg-emerald-500 text-white p-1.5 rounded-full flex items-center justify-center shadow-sm">
@@ -251,6 +251,15 @@
                                         <i class="fas fa-external-link-alt text-slate-400 text-[10px]"></i>
                                     </a>
                                 @endif
+
+                                <button type="button"
+                                    wire:click="reenviarResultadosPorCorreo({{ $servicio->id }})"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex justify-between items-center border border-blue-500">
+                                    <span class="flex items-center gap-2">
+                                        <i class="fas fa-paper-plane"></i> Enviar resultados por correo
+                                    </span>
+                                    <i class="fas fa-envelope-open-text text-white/80 text-[10px]"></i>
+                                </button>
                             </div>
                         @endif
                     </div>

@@ -12,17 +12,6 @@ class ListaPacientes extends Component
 {
     use WithPagination;
 
-    public function tiene_responsable_set(bool $valor): void
-    {
-        $this->tiene_responsable = $valor;
-
-        if (!$valor) {
-            $this->responsable_nombre = '';
-            $this->responsable_celular = null;
-            $this->responsable_relacion = 'Familiar';
-        }
-    }
-
     public string $search = '';
 
     public bool $mostrarFormulario = false;
@@ -45,15 +34,88 @@ class ListaPacientes extends Component
     // Borrado
     public ?int $confirmando_borrar_id = null;
 
+    // ─── Bloqueo en tiempo real ───────────────────────────────────────────────
+
+    /**
+     * Nombre: solo letras/espacios Unicode, máximo 30 caracteres.
+     * Cualquier carácter inválido se elimina automáticamente.
+     */
+    public function updatingNombreCompleto(string $value): void
+    {
+        $limpio = preg_replace('/[^\pL\s]/u', '', $value);
+        $this->nombre_completo = mb_substr($limpio, 0, 30);
+    }
+
+    /**
+     * CI: solo dígitos, letras A-Z y un espacio.
+     * Formato esperado: 12345678 LP (8 dígitos + espacio + 1-2 letras).
+     * Se bloquea cualquier carácter fuera de ese juego.
+     */
+    public function updatingCi(string $value): void
+    {
+        // Permitir solo dígitos, letras mayúsculas y un espacio
+        $limpio = preg_replace('/[^0-9A-Za-z\s]/', '', $value);
+        $limpio = strtoupper($limpio);
+
+        // Limitar a 11 caracteres máximo ("12345678 LP")
+        $this->ci = substr($limpio, 0, 11);
+    }
+
+    /**
+     * Teléfono: solo dígitos, máximo 8.
+     */
+    public function updatingTelefono(?string $value): void
+    {
+        if ($value !== null) {
+            $this->telefono = substr(preg_replace('/\D/', '', $value), 0, 8);
+        }
+    }
+
+    /**
+     * Nombre del responsable: solo letras/espacios Unicode, máximo 30 caracteres.
+     */
+    public function updatingResponsableNombre(string $value): void
+    {
+        $limpio = preg_replace('/[^\pL\s]/u', '', $value);
+        $this->responsable_nombre = mb_substr($limpio, 0, 30);
+    }
+
+    /**
+     * Celular del responsable: solo dígitos, máximo 8.
+     */
+    public function updatingResponsableCelular(?string $value): void
+    {
+        if ($value !== null) {
+            $this->responsable_celular = substr(preg_replace('/\D/', '', $value), 0, 8);
+        }
+    }
+
+    // ─── Responsable toggle ───────────────────────────────────────────────────
+
+    public function tiene_responsable_set(bool $valor): void
+    {
+        $this->tiene_responsable = $valor;
+
+        if (!$valor) {
+            $this->responsable_nombre  = '';
+            $this->responsable_celular = null;
+            $this->responsable_relacion = 'Familiar';
+        }
+    }
+
+    // ─── Búsqueda ─────────────────────────────────────────────────────────────
+
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
+    // ─── Formulario ───────────────────────────────────────────────────────────
+
     public function abrirCrear(): void
     {
         $this->resetFormulario();
-        $this->modo = 'crear';
+        $this->modo        = 'crear';
         $this->editando_id = null;
         $this->mostrarFormulario = true;
     }
@@ -62,71 +124,94 @@ class ListaPacientes extends Component
     {
         $paciente = Paciente::with('responsable')->findOrFail($id);
 
-        $this->modo = 'editar';
+        $this->modo        = 'editar';
         $this->editando_id = $id;
         $this->mostrarFormulario = true;
 
-        $this->ci = (string) $paciente->ci;
-        $this->nombre_completo = (string) $paciente->nombre_completo;
-        $this->fecha_nacimiento = $paciente->fecha_nacimiento ? $paciente->fecha_nacimiento->format('Y-m-d') : '';
-        $this->sexo = (string) $paciente->sexo;
+        $this->ci               = (string) $paciente->ci;
+        $this->nombre_completo  = (string) $paciente->nombre_completo;
+        $this->fecha_nacimiento = $paciente->fecha_nacimiento
+            ? $paciente->fecha_nacimiento->format('Y-m-d')
+            : '';
+        $this->sexo     = (string) $paciente->sexo;
         $this->telefono = $paciente->telefono;
 
-        $this->tiene_responsable = (bool) $paciente->responsable;
-        $this->responsable_nombre = $paciente->responsable?->nombre_completo ?? '';
-        $this->responsable_celular = $paciente->responsable?->celular ?? null;
+        $this->tiene_responsable    = (bool) $paciente->responsable;
+        $this->responsable_nombre   = $paciente->responsable?->nombre_completo ?? '';
+        $this->responsable_celular  = $paciente->responsable?->celular ?? null;
         $this->responsable_relacion = $paciente->responsable?->relacion ?? 'Familiar';
     }
 
     public function cancelarFormulario(): void
     {
-        $this->mostrarFormulario = false;
+        $this->mostrarFormulario     = false;
         $this->confirmando_borrar_id = null;
-        $this->editando_id = null;
+        $this->editando_id           = null;
         $this->resetFormulario();
     }
 
     private function resetFormulario(): void
     {
-        $this->ci = '';
-        $this->nombre_completo = '';
+        $this->ci               = '';
+        $this->nombre_completo  = '';
         $this->fecha_nacimiento = '';
-        $this->sexo = 'M';
-        $this->telefono = null;
+        $this->sexo             = 'M';
+        $this->telefono         = null;
 
-        $this->tiene_responsable = false;
-        $this->responsable_nombre = '';
-        $this->responsable_celular = null;
+        $this->tiene_responsable    = false;
+        $this->responsable_nombre   = '';
+        $this->responsable_celular  = null;
         $this->responsable_relacion = 'Familiar';
     }
 
+    // ─── Validación ───────────────────────────────────────────────────────────
+
     protected function rules(): array
     {
-        // Fecha máxima: ayer (no se permite hoy ni futuro)
-        $maxFecha = now()->subDay()->format('Y-m-d');
+        // Fecha máxima: ayer (ni hoy ni futuro)
+        $ayer = now()->subDay()->format('Y-m-d');
 
         $baseRules = [
-            'ci'               => 'required|string|max:14',
-            'nombre_completo'  => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
-            'fecha_nacimiento' => "required|date|before:{$maxFecha}",
-            'sexo'             => 'required|in:M,F',
-            'telefono'         => 'nullable|digits_between:1,9',
+            // CI: exactamente 8 dígitos + espacio + 1-2 letras mayúsculas
+            'ci'               => ['required', 'string', 'max:11', 'regex:/^\d{8}( [A-Z]{1,2})?$/'],
+
+            // Nombre: solo letras Unicode y espacios, máximo 30 caracteres
+            'nombre_completo'  => ['required', 'string', 'min:3', 'max:30', 'regex:/^[\pL\s]+$/u'],
+
+            // Fecha: no puede ser hoy ni futura
+            'fecha_nacimiento' => "required|date|before_or_equal:{$ayer}",
+
+            'sexo'     => 'required|in:M,F',
+
+            // Teléfono: solo dígitos, máximo 8
+            'telefono' => 'nullable|digits_between:1,8',
 
             'tiene_responsable'    => 'boolean',
-            'responsable_nombre'   => ['required_if:tiene_responsable,true', 'nullable', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
-            'responsable_celular'  => 'nullable|digits_between:1,9',
+
+            // Nombre responsable: solo letras Unicode y espacios, máximo 30
+            'responsable_nombre'   => [
+                'required_if:tiene_responsable,true',
+                'nullable', 'string', 'min:3', 'max:30',
+                'regex:/^[\pL\s]+$/u',
+            ],
+
+            // Celular responsable: solo dígitos, máximo 8
+            'responsable_celular'  => 'nullable|digits_between:1,8',
             'responsable_relacion' => 'required_if:tiene_responsable,true|nullable|string|max:100',
         ];
 
         if ($this->modo === 'editar') {
             $baseRules['ci'] = [
-                'required',
-                'string',
-                'max:14',
+                'required', 'string', 'max:11',
+                'regex:/^\d{8}( [A-Z]{1,2})?$/',
                 Rule::unique('pacientes', 'ci')->ignore($this->editando_id),
             ];
         } else {
-            $baseRules['ci'] = 'required|string|max:14|unique:pacientes,ci';
+            $baseRules['ci'] = [
+                'required', 'string', 'max:11',
+                'regex:/^\d{8}( [A-Z]{1,2})?$/',
+                'unique:pacientes,ci',
+            ];
         }
 
         return $baseRules;
@@ -135,14 +220,21 @@ class ListaPacientes extends Component
     protected function messages(): array
     {
         return [
-            'ci.max'                      => 'El CI no puede tener más de 14 caracteres.',
-            'nombre_completo.regex'       => 'El nombre solo puede contener letras y espacios.',
-            'fecha_nacimiento.before'     => 'La fecha de nacimiento no puede ser hoy ni una fecha futura.',
-            'telefono.digits_between'     => 'El teléfono no puede tener más de 9 dígitos.',
-            'responsable_nombre.regex'    => 'El nombre del responsable solo puede contener letras y espacios.',
-            'responsable_celular.digits_between' => 'El celular del responsable no puede tener más de 9 dígitos.',
+            'ci.regex'                           => 'El CI debe tener exactamente 8 dígitos. Las letras son opcionales (ej: 12345678 o 12345678 LP).',
+            'ci.unique'                          => 'Este CI ya está registrado.',
+            'nombre_completo.min'                => 'El nombre debe tener al menos 3 letras.',
+            'nombre_completo.regex'              => 'El nombre solo puede contener letras y espacios.',
+            'nombre_completo.max'                => 'El nombre no puede tener más de 30 caracteres.',
+            'fecha_nacimiento.before_or_equal'   => 'La fecha de nacimiento no puede ser hoy ni una fecha futura.',
+            'telefono.digits_between'            => 'El teléfono no puede tener más de 8 dígitos.',
+            'responsable_nombre.min'             => 'El nombre del responsable debe tener al menos 3 letras.',
+            'responsable_nombre.regex'           => 'El nombre del responsable solo puede contener letras y espacios.',
+            'responsable_nombre.max'             => 'El nombre del responsable no puede tener más de 30 caracteres.',
+            'responsable_celular.digits_between' => 'El celular del responsable no puede tener más de 8 dígitos.',
         ];
     }
+
+    // ─── Guardar ──────────────────────────────────────────────────────────────
 
     public function guardar(): void
     {
@@ -178,6 +270,7 @@ class ListaPacientes extends Component
                 }
 
                 $responsableId = $responsableId ?? $paciente->responsable()->first()?->id;
+
             } else {
                 $responsable = Responsable::create([
                     'nombre_completo' => $validated['responsable_nombre'],
@@ -193,12 +286,12 @@ class ListaPacientes extends Component
             $paciente = Paciente::findOrFail($this->editando_id);
 
             $paciente->update([
-                'responsable_id'  => $paciente->responsable?->id ?? $responsableId,
-                'ci'              => $validated['ci'],
-                'nombre_completo' => $validated['nombre_completo'],
-                'fecha_nacimiento'=> $validated['fecha_nacimiento'],
-                'sexo'            => $validated['sexo'],
-                'telefono'        => $validated['telefono'],
+                'responsable_id'   => $paciente->responsable?->id ?? $responsableId,
+                'ci'               => $validated['ci'],
+                'nombre_completo'  => $validated['nombre_completo'],
+                'fecha_nacimiento' => $validated['fecha_nacimiento'],
+                'sexo'             => $validated['sexo'],
+                'telefono'         => $validated['telefono'],
             ]);
 
             session()->flash('message', "Paciente {$paciente->nombre_completo} actualizado correctamente.");
@@ -207,17 +300,19 @@ class ListaPacientes extends Component
         }
 
         $paciente = Paciente::create([
-            'responsable_id'  => $responsableId,
-            'ci'              => $validated['ci'],
-            'nombre_completo' => $validated['nombre_completo'],
-            'fecha_nacimiento'=> $validated['fecha_nacimiento'],
-            'sexo'            => $validated['sexo'],
-            'telefono'        => $validated['telefono'],
+            'responsable_id'   => $responsableId,
+            'ci'               => $validated['ci'],
+            'nombre_completo'  => $validated['nombre_completo'],
+            'fecha_nacimiento' => $validated['fecha_nacimiento'],
+            'sexo'             => $validated['sexo'],
+            'telefono'         => $validated['telefono'],
         ]);
 
         session()->flash('message', 'Paciente registrado correctamente.');
         $this->cancelarFormulario();
     }
+
+    // ─── Borrar ───────────────────────────────────────────────────────────────
 
     public function confirmarBorrar(int $id): void
     {
@@ -242,6 +337,8 @@ class ListaPacientes extends Component
             $this->cancelarFormulario();
         }
     }
+
+    // ─── Render ───────────────────────────────────────────────────────────────
 
     public function render()
     {

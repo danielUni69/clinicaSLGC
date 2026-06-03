@@ -258,13 +258,42 @@ class ProcesarResultados extends Component
 
             // Enviar Correo a la lista de destinatarios
             if ($estado_final === 'completada') {
-                $destinatarios = array_filter([$this->email_paciente, $this->email_medico]); // Elimina campos vacíos
+                // Recalcular destinatarios desde BD para no depender del estado del formulario
+                $destinatarios = [];
+
+                $paciente = $this->servicio->paciente;
+                if ($paciente) {
+                    if ($paciente->responsable_id) {
+                        $correoResp = Responsable::where('id', $paciente->responsable_id)->value('correo');
+                        if ($correoResp) {
+                            $destinatarios[] = $correoResp;
+                        }
+                    }
+
+                    $correoPac = $paciente->email;
+                    if ($correoPac) {
+                        $destinatarios[] = $correoPac;
+                    }
+                }
+
+                if ($this->servicio->medico_id) {
+                    $correoMed = MedicoSolicitante::where('id', $this->servicio->medico_id)->value('correo');
+                    if ($correoMed) {
+                        $destinatarios[] = $correoMed;
+                    }
+                }
+
+                // Quitar vacíos y duplicados
+                $destinatarios = array_values(array_unique(array_filter($destinatarios)));
 
                 if (count($destinatarios) > 0) {
                     Mail::to($destinatarios)->send(new ResultadosLaboratorioMail($this->servicio));
                     $mensajeExito .= ' El PDF oficial fue enviado correctamente.';
+                } else {
+                    $mensajeExito .= ' La orden está completada, pero no se encontró correo para enviar.';
                 }
             }
+
 
             DB::commit();
             session()->flash('mensaje', $mensajeExito);

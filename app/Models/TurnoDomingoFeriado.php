@@ -12,16 +12,13 @@ class TurnoDomingoFeriado extends Model
 
     protected $table = 'turnos_domingo_feriados';
 
-    protected $fillable = [
-        'user_id',
-        'fecha',
-    ];
+    protected $fillable = ['user_id', 'fecha'];
 
     protected $casts = [
         'fecha' => 'date',
     ];
 
-    public function bioquimico(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
