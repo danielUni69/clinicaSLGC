@@ -21,6 +21,31 @@ class ReportePacientes extends Component
         $this->fechaInicio = now()->startOfMonth()->format('Y-m-d');
         $this->fechaFin = now()->format('Y-m-d');
     }
+    public function updatedFechaInicio()
+{
+    if ($this->fechaFin && $this->fechaInicio > $this->fechaFin) {
+
+        $this->fechaInicio = $this->fechaFin;
+
+        session()->flash(
+            'warning',
+            'La fecha de inicio no puede ser posterior a la fecha fin.'
+        );
+    }
+}
+
+public function updatedFechaFin()
+{
+    if ($this->fechaInicio && $this->fechaFin < $this->fechaInicio) {
+
+        $this->fechaFin = $this->fechaInicio;
+
+        session()->flash(
+            'warning',
+            'La fecha fin no puede ser anterior a la fecha de inicio.'
+        );
+    }
+}
 
     public function generar()
 {
