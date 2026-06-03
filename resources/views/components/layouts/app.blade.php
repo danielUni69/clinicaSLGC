@@ -169,8 +169,15 @@
                                     </span>
                                 </a>
                             @endif
+
+
                             <!-- ==================== DROPDOWN ADMINISTRACIÓN ==================== -->
                             @if (Auth::user()->role === 'administrador')
+                                <a href="{{ route('pacientes.historial') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.historial') ? 'active' : '' }}">
+                                    <i class="fas fa-notes-medical w-4 text-indigo-400"></i>
+                                    <span class="text-sm">Historial Clínico</span>
+                                </a>
                                 <div class="relative" x-data="{ adminOpen: false }">
                                     <button @click="adminOpen = !adminOpen"
                                         class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg cursor-pointer focus:outline-none {{ request()->routeIs('admin.*') ? 'active' : '' }}">
