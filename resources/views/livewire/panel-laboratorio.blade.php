@@ -1,5 +1,4 @@
 <div class="max-w-[1600px] mx-auto py-8 sm:px-6 lg:px-8">
-
     <div class="flex flex-col gap-3 mb-8">
 
         @if (session()->has('mensaje') && trim((string) session('mensaje')) !== '')
@@ -153,33 +152,12 @@
             <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 @forelse($muestras_recolectadas as $servicio)
                     @php
-                        // Separar rutinas de cultivos
-                        $analisis_rutina = $servicio->tiposAnalisis->filter(function ($a) {
-                            return !$a->categoria || !$a->categoria->es_cultivo;
-                        });
-                        $analisis_cultivos = $servicio->tiposAnalisis->filter(function ($a) {
+                        $tiene_cultivos = $servicio->tiposAnalisis->contains(function ($a) {
                             return $a->categoria && $a->categoria->es_cultivo;
                         });
-
-                        $tiene_analisis_normales = $analisis_rutina->isNotEmpty();
-                        $tiene_cultivos = $analisis_cultivos->isNotEmpty();
-
-                        // LÓGICA INTELIGENTE: Verificar si ya se completaron/enviaron parcialmente
-                        $rutina_completada = false;
-                        if ($tiene_analisis_normales) {
-                            $rutina_completada =
-                                \App\Models\ResultadoAnalisis::where('servicio_id', $servicio->id)
-                                    ->whereIn('tipo_analisis_id', $analisis_rutina->pluck('id'))
-                                    ->count() == $analisis_rutina->count();
-                        }
-
-                        $cultivo_completado = false;
-                        if ($tiene_cultivos) {
-                            $cultivo_completado =
-                                \App\Models\Cultivo::where('servicio_id', $servicio->id)
-                                    ->whereIn('estado_cultivo', ['negativo', 'positivo_identificado'])
-                                    ->count() == $analisis_cultivos->count();
-                        }
+                        $tiene_analisis_normales = $servicio->tiposAnalisis->contains(function ($a) {
+                            return !$a->categoria || !$a->categoria->es_cultivo;
+                        });
                     @endphp
 
                     <div
@@ -200,60 +178,32 @@
                         <div class="flex flex-wrap gap-2 mb-4">
                             @if ($tiene_analisis_normales)
                                 <span
-                                    class="text-[11px] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5 {{ $rutina_completada ? 'bg-slate-100 text-slate-400 line-through' : 'bg-indigo-50 text-indigo-700 border border-indigo-200' }}">
-                                    <i class="fas fa-flask"></i> Rutina/Clínica
+                                    class="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
+                                    <i class="fas fa-flask text-indigo-400"></i> Rutina/Clínica
                                 </span>
                             @endif
                             @if ($tiene_cultivos)
                                 <span
-                                    class="text-[11px] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5 {{ $cultivo_completado ? 'bg-slate-100 text-slate-400 line-through' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
-                                    <i class="fas fa-bacteria"></i> Microbiología
+                                    class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
+                                    <i class="fas fa-bacteria text-emerald-500"></i> Microbiología
                                 </span>
                             @endif
                         </div>
 
                         <div class="space-y-2.5 mt-5 pt-4 border-t border-slate-100">
-
                             @if ($tiene_analisis_normales)
-                                @if ($rutina_completada)
-                                    <div
-                                        class="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold py-2.5 px-4 rounded-xl text-xs flex justify-between items-center shadow-sm">
-                                        <span class="flex items-center gap-2"><i
-                                                class="fas fa-check-circle text-emerald-500"></i> Clínicos
-                                            Enviados</span>
-                                        <a href="{{ route('laboratorio.pdf', $servicio->id) }}" target="_blank"
-                                            class="text-indigo-600 hover:text-indigo-800 bg-white px-2 py-1 rounded shadow-sm border border-indigo-100 transition-colors">
-                                            <i class="fas fa-file-pdf text-red-500"></i> Ver PDF
-                                        </a>
-                                    </div>
-                                @else
-                                    <a href="{{ route('laboratorio.procesar', $servicio->id) }}" wire:navigate
-                                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-sm hover:shadow-md hover:shadow-indigo-500/30 transition-all flex justify-center items-center gap-2">
-                                        <i class="fas fa-keyboard"></i> Transcribir Clínicos
-                                    </a>
-                                @endif
+                                <a href="{{ route('laboratorio.procesar', $servicio->id) }}" wire:navigate
+                                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-sm hover:shadow-md hover:shadow-indigo-500/30 transition-all flex justify-center items-center gap-2">
+                                    <i class="fas fa-keyboard"></i> Transcribir Clínicos
+                                </a>
                             @endif
 
                             @if ($tiene_cultivos)
-                                @if ($cultivo_completado)
-                                    <div
-                                        class="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold py-2.5 px-4 rounded-xl text-xs flex justify-between items-center shadow-sm">
-                                        <span class="flex items-center gap-2"><i
-                                                class="fas fa-check-circle text-emerald-500"></i> Cultivo
-                                            Enviado</span>
-                                        <a href="{{ route('laboratorio.pdf_micro', $servicio->id) }}" target="_blank"
-                                            class="text-indigo-600 hover:text-indigo-800 bg-white px-2 py-1 rounded shadow-sm border border-indigo-100 transition-colors">
-                                            <i class="fas fa-file-pdf text-red-500"></i> Ver PDF
-                                        </a>
-                                    </div>
-                                @else
-                                    <a href="{{ route('laboratorio.cultivo', $servicio->id) }}" wire:navigate
-                                        class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-sm hover:shadow-md hover:shadow-emerald-500/30 transition-all flex justify-center items-center gap-2">
-                                        <i class="fas fa-disease"></i> Gestionar Incubación
-                                    </a>
-                                @endif
+                                <a href="{{ route('laboratorio.cultivo', $servicio->id) }}" wire:navigate
+                                    class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-sm hover:shadow-md hover:shadow-emerald-500/30 transition-all flex justify-center items-center gap-2">
+                                    <i class="fas fa-disease"></i> Gestionar Incubación
+                                </a>
                             @endif
-
                         </div>
                     </div>
                 @empty
