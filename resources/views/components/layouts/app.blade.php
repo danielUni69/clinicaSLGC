@@ -207,6 +207,12 @@
                                             <span class="text-sm">Turnos</span>
                                         </a>
 
+                                        <a href="{{ route('reportes.index') }}"
+                                            class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
+                                            <i class="fas fa-chart-line w-4 mr-2 text-cyan-400"></i>
+                                            Reportes
+                                        </a>
+
                                     </div>
                                 </div>
                             @endif

@@ -14,6 +14,8 @@ use App\Livewire\Turnos\Turnos;
 use App\Livewire\ProcesarCultivo;
 use App\Livewire\ProcesarResultados;
 use App\Livewire\UsersList;
+use App\Livewire\Reportes\ReportePacientes;
+use App\Livewire\Reportes\IndexReportes;
 use Illuminate\Support\Facades\Route;
 
 // Rutas Públicas (Sin Login)
@@ -81,6 +83,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('admin.antibioticos');
         Route::get('/administracion/usuarios', UsersList::class)
             ->name('admin.users.list');
+
+        Route::get('/administracion/reportes', ReportePacientes::class)
+            ->name('reportes.index');
         
     });
+    
 });
