@@ -36,7 +36,6 @@ class CatalogoAnalisis extends Component
 
     public $ana_tipo_parametro = 'numerico';
 
-    // Convertimos nulls a strings vacíos para evitar errores al tipear
     public $ana_rango_min_m = '';
 
     public $ana_rango_max_m = '';
@@ -167,7 +166,6 @@ class CatalogoAnalisis extends Component
             $this->ana_unidad_medida = $ana->unidad_medida;
             $this->ana_tipo_parametro = $ana->tipo_parámetro;
 
-            // Garantizar que los valores nulos lleguen como strings vacíos al input
             $this->ana_rango_min_m = $ana->rango_min_masculino ?? '';
             $this->ana_rango_max_m = $ana->rango_max_masculino ?? '';
             $this->ana_rango_min_f = $ana->rango_min_femenino ?? '';
@@ -207,16 +205,13 @@ class CatalogoAnalisis extends Component
 
             if ($this->ana_tipo_parametro === 'numerico') {
                 $rules['ana_unidad_medida'] = 'required|string|max:50';
-
-                // REGLAS ESTRICTAS DE MIN-MAX
-                // Si el max_m tiene un valor, validamos que min_m sea obligatorio y que sea menor (lt).
                 $rules['ana_rango_min_m'] = 'nullable|numeric|lt:ana_rango_max_m';
                 $rules['ana_rango_max_m'] = 'nullable|numeric|gt:ana_rango_min_m';
-
                 $rules['ana_rango_min_f'] = 'nullable|numeric|lt:ana_rango_max_f';
                 $rules['ana_rango_max_f'] = 'nullable|numeric|gt:ana_rango_min_f';
             } else {
-                $rules['ana_ref_cualitativa'] = 'required|string|max:255';
+                // AHORA FORZAMOS A QUE ELIJA UNA DE LAS 3 OPCIONES EXACTAS
+                $rules['ana_ref_cualitativa'] = 'required|in:Negativo,No Reactivo,N/A';
             }
         }
 
@@ -226,6 +221,7 @@ class CatalogoAnalisis extends Component
             'ana_costo.required' => 'El costo es obligatorio.',
             'ana_unidad_medida.required' => 'La unidad de medida es obligatoria para exámenes numéricos.',
             'ana_ref_cualitativa.required' => 'Debe definir el valor esperado.',
+            'ana_ref_cualitativa.in' => 'Seleccione una opción válida de la lista.',
             'ana_rango_min_m.lt' => 'El mínimo debe ser menor que el máximo.',
             'ana_rango_max_m.gt' => 'El máximo debe ser mayor que el mínimo.',
             'ana_rango_min_f.lt' => 'El mínimo debe ser menor que el máximo.',

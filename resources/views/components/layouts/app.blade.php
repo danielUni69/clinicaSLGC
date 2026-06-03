@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
 
     <title>{{ $title ?? 'SGLC - Clínica Illapa' }}</title>
 
@@ -227,8 +227,8 @@
             @endauth
         </header>
 
-        <main class="w-full h-full flex-1 overflow-y-auto bg-white">
-            <div class="relative w-full min-h-screen">
+        <main class="w-full flex-1 overflow-y-auto bg-white">
+            <div class="relative w-full h-full">
                 {{ $slot }}
             </div>
         </main>

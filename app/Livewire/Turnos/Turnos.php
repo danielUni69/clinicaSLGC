@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Turnos;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\TurnoDomingoFeriado;
 use App\Models\User;
 use Carbon\Carbon;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Turnos extends Component
 {
@@ -17,30 +17,35 @@ class Turnos extends Component
 
     // Calendario
     public $calYear;
-    public $calMonth;
-    public $allTurnos = [];   // Cambiado a array simple
 
-    // Formulario asignar turno
+    public $calMonth;
+
+    public $allTurnos = [];
+
+    // --- FORMULARIO EDICIÓN / ASIGNACIÓN ---
+    public $turno_id = null;
+
     public $user_id;
+
     public $fecha;
 
     // Lista de turnos
     public $search = '';
-    public $filterTipo = '';
 
-    // Feriados
-    public $newFeriadoNombre;
-    public $newFeriadoFecha;
+    public $filterTipo = '';
 
     // Datos
     public $users = [];
+
     public $feriados = [];
+
     public $feriadosBase = [];
+
     public $turnosCounts = [];
 
     public function mount()
     {
-        $this->calYear  = now()->year;
+        $this->calYear = now()->year;
         $this->calMonth = now()->month - 1;
 
         $this->loadUsers();
@@ -51,9 +56,7 @@ class Turnos extends Component
 
     public function loadUsers()
     {
-        $this->users = User::where('active', true)
-            ->orderBy('name')
-            ->get();
+        $this->users = User::where('active', true)->orderBy('name')->get();
     }
 
     public function loadFeriados()
@@ -80,7 +83,6 @@ class Turnos extends Component
             ->whereMonth('fecha', $this->calMonth + 1)
             ->get();
 
-        // Convertimos a array simple para Livewire
         $this->allTurnos = [];
         foreach ($turnos as $t) {
             $fecha = $t->fecha->format('Y-m-d');
@@ -119,57 +121,105 @@ class Turnos extends Component
     public function isFeriado($fecha)
     {
         $md = Carbon::parse($fecha)->format('m-d');
+
         return array_key_exists($md, $this->feriados);
     }
 
     public function isFinde($fecha)
     {
         $dow = Carbon::parse($fecha)->dayOfWeek;
+
         return $dow === 0 || $dow === 6;
     }
 
     public function getMood($count)
     {
-        if ($count <= 2) return 'happy';
-        if ($count <= 5) return 'mid';
+        if ($count <= 2) {
+            return 'happy';
+        }
+        if ($count <= 5) {
+            return 'mid';
+        }
+
         return 'sad';
     }
 
     public function getMoodLabel($count)
     {
-        if ($count === 0) return ['txt' => 'Disponible', 'color' => 'text-green-600'];
-        if ($count <= 2) return ['txt' => 'Descansado', 'color' => 'text-green-600'];
-        if ($count <= 5) return ['txt' => 'Cargado', 'color' => 'text-amber-600'];
+        if ($count === 0) {
+            return ['txt' => 'Disponible', 'color' => 'text-green-600'];
+        }
+        if ($count <= 2) {
+            return ['txt' => 'Descansado', 'color' => 'text-green-600'];
+        }
+        if ($count <= 5) {
+            return ['txt' => 'Cargado', 'color' => 'text-amber-600'];
+        }
+
         return ['txt' => 'Agotado', 'color' => 'text-red-600'];
+    }
+
+    // ==========================================
+    // LÓGICA DE EDICIÓN Y REASIGNACIÓN
+    // ==========================================
+    public function editar($id)
+    {
+        $turno = TurnoDomingoFeriado::find($id);
+        if ($turno) {
+            $this->turno_id = $turno->id;
+            $this->user_id = $turno->user_id;
+            $this->fecha = $turno->fecha->format('Y-m-d');
+
+            // Disparamos un evento para que la pantalla baje suavemente hasta el formulario
+            $this->dispatch('scrollToForm');
+        }
+    }
+
+    public function cancelarEdicion()
+    {
+        $this->reset(['turno_id', 'user_id', 'fecha']);
     }
 
     public function guardar()
     {
         $this->validate([
             'user_id' => 'required|exists:users,id',
-            'fecha'   => 'required|date',
+            'fecha' => 'required|date',
         ]);
 
-        // Evitar duplicados
-        $existe = TurnoDomingoFeriado::where('user_id', $this->user_id)
-                    ->where('fecha', $this->fecha)
-                    ->exists();
+        // Evitar duplicados excluyendo el turno actual si estamos editando
+        $query = TurnoDomingoFeriado::where('user_id', $this->user_id)->whereDate('fecha', $this->fecha);
 
-        if ($existe) {
-            $this->dispatch('notify', type: 'error', message: 'Este usuario ya tiene turno ese día');
+        if ($this->turno_id) {
+            $query->where('id', '!=', $this->turno_id);
+        }
+
+        if ($query->exists()) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Este usuario ya tiene turno ese día']);
+
             return;
         }
 
-        TurnoDomingoFeriado::create([
-            'user_id' => $this->user_id,
-            'fecha'   => $this->fecha,
-        ]);
+        if ($this->turno_id) {
+            $turno = TurnoDomingoFeriado::find($this->turno_id);
+            $turno->update([
+                'user_id' => $this->user_id,
+                'fecha' => $this->fecha,
+            ]);
+            $msg = 'Turno reasignado correctamente';
+        } else {
+            TurnoDomingoFeriado::create([
+                'user_id' => $this->user_id,
+                'fecha' => $this->fecha,
+            ]);
+            $msg = 'Turno asignado correctamente';
+        }
 
         $this->loadTurnos();
         $this->loadTurnosCounts();
-        $this->reset('user_id');
+        $this->cancelarEdicion();
 
-        $this->dispatch('notify', type: 'success', message: 'Turno asignado correctamente');
+        $this->dispatch('notify', ['type' => 'success', 'message' => $msg]);
     }
 
     public function eliminar($id)
@@ -177,24 +227,36 @@ class Turnos extends Component
         TurnoDomingoFeriado::destroy($id);
         $this->loadTurnos();
         $this->loadTurnosCounts();
-        $this->dispatch('notify', type: 'success', message: 'Turno eliminado');
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Turno eliminado']);
     }
 
     public function render()
     {
+        // 1. Datos para la pestaña de Listado Completo
         $turnos = TurnoDomingoFeriado::with('user')
-            ->when($this->search, function($q) {
-                $q->whereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%"));
+            ->when($this->search, function ($q) {
+                $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$this->search}%"));
             })
             ->orderBy('fecha', 'desc')
             ->paginate(15);
 
+        // 2. Datos cruzados para la pestaña de Feriados (Trae los del año actual y los agrupa por "Mes-Día")
+        $turnosDelAnio = TurnoDomingoFeriado::with('user')->whereYear('fecha', $this->calYear)->get();
+
+        $turnosEnFeriados = $turnosDelAnio->filter(function ($t) {
+            return array_key_exists($t->fecha->format('m-d'), $this->feriadosBase);
+        })->groupBy(function ($t) {
+            return $t->fecha->format('m-d');
+        });
+
         return view('livewire.turnos.turnos', [
             'turnos' => $turnos,
-            'users'  => $this->users,
+            'users' => $this->users,
             'feriados' => $this->feriados,
             'feriadosBase' => $this->feriadosBase,
             'turnosCounts' => $this->turnosCounts,
+            'turnosEnFeriados' => $turnosEnFeriados, // Nueva variable enviada a la vista
         ]);
     }
 }
+

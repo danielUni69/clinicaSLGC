@@ -95,7 +95,7 @@
                 <div class="col-span-5 space-y-6">
                     <div class="bg-white shadow-sm rounded-2xl p-6 border border-slate-200 flex flex-col h-[65vh]">
                         <h3
-                            class="text-sm font-black text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+                            class="text-sm font-black text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 flex items-center gap-2 shrink-0">
                             <i class="fas fa-history text-slate-400"></i> Bitácora de Evolución Diaria
                         </h3>
 
@@ -119,7 +119,7 @@
                             @endforelse
                         </div>
 
-                        <div class="pt-4 border-t border-slate-100 mt-4">
+                        <div class="pt-4 border-t border-slate-100 mt-4 shrink-0">
                             <div class="flex gap-2">
                                 <input type="text" wire:model="cultivos_data.{{ $id_analisis }}.nueva_observacion"
                                     wire:keydown.enter="agregarEvolucion({{ $id_analisis }})"
@@ -140,106 +140,110 @@
                 </div>
 
                 <div class="col-span-7 space-y-6" x-data="{ estado: '{{ $cData['estado_cultivo'] }}' }">
-                    <div class="bg-white shadow-sm rounded-2xl p-6 border border-slate-200">
+                    <div class="bg-white shadow-sm rounded-2xl p-6 border border-slate-200 flex flex-col h-[65vh]">
 
                         <h2
-                            class="text-lg font-black text-slate-800 mb-5 pb-3 border-b border-slate-100 flex justify-between items-center">
+                            class="text-lg font-black text-slate-800 mb-5 pb-3 border-b border-slate-100 flex justify-between items-center shrink-0">
                             <span>Examen: <span class="text-emerald-700">{{ $cData['nombre_examen'] }}</span></span>
                         </h2>
 
-                        <div class="grid grid-cols-2 gap-5 mb-6">
-                            <div>
-                                <label
-                                    class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Estado
-                                    Clínico del Cultivo</label>
-                                <select wire:model.live="cultivos_data.{{ $id_analisis }}.estado_cultivo"
-                                    x-model="estado"
-                                    class="block w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold rounded-xl focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-colors cursor-pointer shadow-sm">
-                                    <option value="en_incubacion">🔬 En Incubación (Proceso Abierto)</option>
-                                    <option value="negativo">❌ Negativo (Sin desarrollo bacteriano)</option>
-                                    <option value="positivo_identificado">🧫 Positivo (Aisla Cepa Bacteriana)</option>
-                                </select>
+                        <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar" wire:ignore.self>
+
+                            <div class="grid grid-cols-2 gap-5 mb-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Estado
+                                        Clínico del Cultivo</label>
+                                    <select wire:model.live="cultivos_data.{{ $id_analisis }}.estado_cultivo"
+                                        x-model="estado"
+                                        class="block w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold rounded-xl focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-colors cursor-pointer shadow-sm">
+                                        <option value="en_incubacion">🔬 En Incubación (Proceso Abierto)</option>
+                                        <option value="negativo">❌ Negativo (Sin desarrollo bacteriano)</option>
+                                        <option value="positivo_identificado">🧫 Positivo (Aisla Cepa Bacteriana)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div x-show="estado === 'positivo_identificado'" x-cloak
+                                    x-transition:enter="transition ease-out duration-300"
+                                    x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                    x-transition:enter-end="opacity-100 transform translate-y-0">
+                                    <label
+                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Germen
+                                        / Cepa Aislada</label>
+                                    <input type="text"
+                                        wire:model="cultivos_data.{{ $id_analisis }}.cepa_bacteriana"
+                                        class="block w-full bg-white border border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-900 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner"
+                                        placeholder="Ej: Escherichia coli, Staphylococcus aureus...">
+                                </div>
                             </div>
 
                             <div x-show="estado === 'positivo_identificado'" x-cloak
-                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter="transition ease-out duration-300 delay-75"
                                 x-transition:enter-start="opacity-0 transform -translate-y-2"
-                                x-transition:enter-end="opacity-100 transform translate-y-0">
-                                <label
-                                    class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Germen
-                                    / Cepa Aislada</label>
-                                <input type="text" wire:model="cultivos_data.{{ $id_analisis }}.cepa_bacteriana"
-                                    class="block w-full bg-white border border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-900 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner"
-                                    placeholder="Ej: Escherichia coli, Staphylococcus aureus...">
-                            </div>
-                        </div>
+                                x-transition:enter-end="opacity-100 transform translate-y-0"
+                                class="pt-5 border-t border-slate-100">
 
-                        <div x-show="estado === 'positivo_identificado'" x-cloak
-                            x-transition:enter="transition ease-out duration-300 delay-75"
-                            x-transition:enter-start="opacity-0 transform -translate-y-2"
-                            x-transition:enter-end="opacity-100 transform translate-y-0"
-                            class="pt-5 border-t border-slate-100">
+                                <h3
+                                    class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <i class="fas fa-shield-virus text-emerald-600"></i> Prueba de Susceptibilidad
+                                    Antibiótica (Antibiograma)
+                                </h3>
 
-                            <h3
-                                class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <i class="fas fa-shield-virus text-emerald-600"></i> Prueba de Susceptibilidad
-                                Antibiótica (Antibiograma)
-                            </h3>
-
-                            <div
-                                class="max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar border border-slate-200 rounded-xl">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr
-                                            class="bg-slate-100 text-[10px] font-black text-slate-500 border-b border-slate-200 uppercase tracking-wider sticky top-0 z-10">
-                                            <th class="p-3">Antibiótico</th>
-                                            <th class="p-3 text-center w-48">Nivel de Susceptibilidad</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                                        @foreach ($antibioticos_disponibles as $anti)
-                                            <tr class="hover:bg-slate-50"
-                                                wire:key="anti-{{ $id_analisis }}-{{ $anti->id }}">
-                                                <td class="p-3 font-bold text-slate-800">
-                                                    {{ $anti->nombre_antibiotico }}</td>
-                                                <td class="p-3">
-                                                    <div class="flex justify-center gap-2">
-                                                        <label class="cursor-pointer">
-                                                            <input type="radio"
-                                                                wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
-                                                                value="S" class="sr-only peer">
-                                                            <span
-                                                                class="w-8 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 text-[10px] font-black peer-checked:bg-emerald-100 peer-checked:border-emerald-400 peer-checked:text-emerald-700 transition-all shadow-sm">S</span>
-                                                        </label>
-                                                        <label class="cursor-pointer">
-                                                            <input type="radio"
-                                                                wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
-                                                                value="I" class="sr-only peer">
-                                                            <span
-                                                                class="w-8 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 text-[10px] font-black peer-checked:bg-amber-100 peer-checked:border-amber-400 peer-checked:text-amber-700 transition-all shadow-sm">I</span>
-                                                        </label>
-                                                        <label class="cursor-pointer">
-                                                            <input type="radio"
-                                                                wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
-                                                                value="R" class="sr-only peer">
-                                                            <span
-                                                                class="w-8 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 text-[10px] font-black peer-checked:bg-red-100 peer-checked:border-red-400 peer-checked:text-red-700 transition-all shadow-sm">R</span>
-                                                        </label>
-                                                        <button type="button"
-                                                            wire:click="$set('cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}', '')"
-                                                            class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors">
-                                                            <i class="fas fa-times text-[10px]"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr
+                                                class="bg-slate-100 text-[10px] font-black text-slate-500 border-b border-slate-200 uppercase tracking-wider sticky top-0 z-10">
+                                                <th class="p-3">Antibiótico</th>
+                                                <th class="p-3 text-center w-48">Nivel de Susceptibilidad</th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                                            @foreach ($antibioticos_disponibles as $anti)
+                                                <tr class="hover:bg-slate-50"
+                                                    wire:key="anti-{{ $id_analisis }}-{{ $anti->id }}">
+                                                    <td class="p-3 font-bold text-slate-800">
+                                                        {{ $anti->nombre_antibiotico }}</td>
+                                                    <td class="p-3">
+                                                        <div class="flex justify-center gap-2">
+                                                            <label class="cursor-pointer">
+                                                                <input type="radio"
+                                                                    wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
+                                                                    value="S" class="hidden peer">
+                                                                <span
+                                                                    class="w-8 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 text-[10px] font-black peer-checked:bg-emerald-100 peer-checked:border-emerald-400 peer-checked:text-emerald-700 transition-all shadow-sm">S</span>
+                                                            </label>
+                                                            <label class="cursor-pointer">
+                                                                <input type="radio"
+                                                                    wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
+                                                                    value="I" class="hidden peer">
+                                                                <span
+                                                                    class="w-8 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 text-[10px] font-black peer-checked:bg-amber-100 peer-checked:border-amber-400 peer-checked:text-amber-700 transition-all shadow-sm">I</span>
+                                                            </label>
+                                                            <label class="cursor-pointer">
+                                                                <input type="radio"
+                                                                    wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
+                                                                    value="R" class="hidden peer">
+                                                                <span
+                                                                    class="w-8 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 text-[10px] font-black peer-checked:bg-red-100 peer-checked:border-red-400 peer-checked:text-red-700 transition-all shadow-sm">R</span>
+                                                            </label>
+                                                            <button type="button"
+                                                                wire:click.prevent="$set('cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}', '')"
+                                                                class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors">
+                                                                <i class="fas fa-times text-[10px]"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-end gap-3">
+                        <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
                             <button type="button" wire:click="previsualizarCultivo({{ $id_analisis }})"
                                 wire:loading.attr="disabled"
                                 class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-md transition-colors flex items-center gap-2">
@@ -265,7 +269,6 @@
 
             <div class="fixed inset-0 bg-slate-900 bg-opacity-75 backdrop-blur-sm transition-opacity"
                 wire:click="cerrarModal"></div>
-
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
 
             <div

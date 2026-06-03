@@ -29,6 +29,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
+        <!-- COLUMNA IZQUIERDA: CATEGORÍAS -->
         <div class="lg:col-span-4 space-y-4">
             <div class="bg-white shadow-sm rounded-2xl p-5 border border-gray-100 h-[75vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
@@ -61,7 +62,8 @@
                                         <p class="font-bold text-sm">{{ $cat->nombre }}</p>
                                         <p
                                             class="text-[10px] {{ $categoria_seleccionada_id === $cat->id ? 'text-blue-500' : 'text-gray-400' }}">
-                                            {{ $cat->tipos_analisis_count }} exámenes</p>
+                                            {{ $cat->tipos_analisis_count }} exámenes
+                                        </p>
                                     </div>
                                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button wire:click="abrirModalCategoria({{ $cat->id }})"
@@ -92,7 +94,8 @@
                                         <p class="font-bold text-sm">{{ $cat->nombre }}</p>
                                         <p
                                             class="text-[10px] {{ $categoria_seleccionada_id === $cat->id ? 'text-green-600' : 'text-gray-400' }}">
-                                            {{ $cat->tipos_analisis_count }} cultivos</p>
+                                            {{ $cat->tipos_analisis_count }} cultivos
+                                        </p>
                                     </div>
                                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button wire:click="abrirModalCategoria({{ $cat->id }})"
@@ -108,11 +111,11 @@
                             @endforelse
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
 
+        <!-- COLUMNA DERECHA: EXÁMENES -->
         <div class="lg:col-span-8 space-y-4">
             <div class="bg-white shadow-sm rounded-2xl p-5 border border-gray-100 h-[75vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
@@ -171,8 +174,9 @@
                                     </td>
                                     <td class="p-3 flex justify-center gap-2">
                                         <button wire:click.prevent="abrirModalAnalisis({{ $ana->id }})"
-                                            class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors flex items-center justify-center"><i
-                                                class="fas fa-edit"></i></button>
+                                            class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors flex items-center justify-center">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             @empty
@@ -191,6 +195,7 @@
 
     </div>
 
+    <!-- MODAL CATEGORÍA -->
     @if ($mostrarModalCategoria)
         <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
@@ -234,6 +239,7 @@
         </div>
     @endif
 
+    <!-- MODAL ANÁLISIS -->
     @if ($mostrarModalAnalisis)
         <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
@@ -339,8 +345,7 @@
                                     <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                         <p
                                             class="text-xs font-bold text-gray-500 uppercase text-center mb-3 border-b pb-2">
-                                            <i class="fas fa-male text-blue-400"></i> Rango Masculino
-                                        </p>
+                                            <i class="fas fa-male text-blue-400"></i> Rango Masculino</p>
                                         <div class="flex items-center gap-2">
                                             <input type="number" step="0.01" wire:model="ana_rango_min_m"
                                                 class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-blue-500"
@@ -360,8 +365,7 @@
                                     <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                         <p
                                             class="text-xs font-bold text-gray-500 uppercase text-center mb-3 border-b pb-2">
-                                            <i class="fas fa-female text-pink-400"></i> Rango Femenino
-                                        </p>
+                                            <i class="fas fa-female text-pink-400"></i> Rango Femenino</p>
                                         <div class="flex items-center gap-2">
                                             <input type="number" step="0.01" wire:model="ana_rango_min_f"
                                                 class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-pink-500"
@@ -381,17 +385,26 @@
                                 </div>
                             </div>
                         @else
+                            <!-- AQUÍ ESTÁ EL CAMBIO PRINCIPAL: EL SELECT EN VEZ DEL INPUT DE TEXTO -->
                             <div class="bg-purple-50/50 p-5 rounded-xl border border-purple-100">
-                                <h4 class="text-sm font-bold text-purple-800 mb-4 flex items-center gap-2"><i
-                                        class="fas fa-spell-check"></i> Resultado Esperado (Referencia)</h4>
-                                <p class="text-xs text-gray-600 mb-3">Escriba el valor que el sistema considerará como
-                                    <strong>Normal</strong> para no activar la alerta roja en el PDF.
+                                <h4 class="text-sm font-bold text-purple-800 mb-4 flex items-center gap-2">
+                                    <i class="fas fa-spell-check"></i> Resultado Esperado (Referencia Normal)
+                                </h4>
+                                <p class="text-xs text-gray-600 mb-3">
+                                    Seleccione el valor que el sistema considerará como <strong>Normal</strong> para no
+                                    activar la alerta roja en el PDF.
                                 </p>
-                                <input type="text" wire:model="ana_ref_cualitativa"
-                                    class="w-full bg-white border border-gray-300 rounded-lg p-2.5 font-bold text-purple-900 focus:ring-purple-500"
-                                    placeholder="Ej: Negativo, No Reactivo, N/A">
-                                <p class="text-[10px] text-gray-500 mt-1">Use "N/A" para exámenes que no tienen valores
-                                    anormales (Ej: Grupo Sanguíneo).</p>
+
+                                <select wire:model="ana_ref_cualitativa"
+                                    class="w-full bg-white border border-gray-300 rounded-lg p-2.5 font-bold text-purple-900 focus:ring-purple-500 shadow-sm">
+                                    <option value="">-- Seleccione una opción --</option>
+                                    <option value="Negativo">✅ Negativo (Ej: Pruebas de Embarazo, Test de Drogas)
+                                    </option>
+                                    <option value="No Reactivo">✅ No Reactivo (Ej: VIH, Sífilis/VDRL, Hepatitis)
+                                    </option>
+                                    <option value="N/A">ℹ️ No Aplica / Descriptivo (Ej: Grupo Sanguíneo)</option>
+                                </select>
+
                                 @error('ana_ref_cualitativa')
                                     <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                                 @enderror
