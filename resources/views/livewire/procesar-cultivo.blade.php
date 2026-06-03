@@ -66,8 +66,7 @@
                     <div class="bg-white shadow-sm rounded-2xl p-6 border border-gray-100 flex flex-col h-[65vh]">
                         <h3
                             class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b pb-3 mb-4 flex items-center gap-2">
-                            <i class="fas fa-history text-gray-400"></i>
-                            Bitácora de Evolución Diaria
+                            <i class="fas fa-history text-gray-400"></i> Bitácora de Evolución Diaria
                         </h3>
 
                         <div class="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar text-xs">
@@ -101,14 +100,15 @@
                                 </button>
                             </div>
                             @if (session()->has('mensaje_bitacora'))
-                                <span class="text-[11px] text-emerald-600 font-bold mt-1.5 block"><i
-                                        class="fas fa-check"></i> {{ session('mensaje_bitacora') }}</span>
+                                <span class="text-[11px] text-emerald-600 font-bold mt-1.5 block">
+                                    <i class="fas fa-check"></i> {{ session('mensaje_bitacora') }}
+                                </span>
                             @endif
                         </div>
                     </div>
                 </div>
 
-                <div class="lg:col-span-7 space-y-6">
+                <div class="lg:col-span-7 space-y-6" x-data="{ estado: '{{ $cData['estado_cultivo'] }}' }">
                     <div class="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
 
                         <h2
@@ -121,87 +121,93 @@
                                 <label
                                     class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Estado
                                     Clínico del Cultivo</label>
+
                                 <select wire:model.live="cultivos_data.{{ $id_analisis }}.estado_cultivo"
-                                    class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm font-medium rounded-xl focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-colors">
+                                    x-model="estado"
+                                    class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm font-medium rounded-xl focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-colors cursor-pointer">
                                     <option value="en_incubacion">🔬 En Incubación (Proceso Abierto)</option>
                                     <option value="negativo">❌ Negativo (Sin desarrollo bacteriano)</option>
                                     <option value="positivo_identificado">🧫 Positivo (Aisla Cepa Bacteriana)</option>
                                 </select>
                             </div>
 
-                            @if ($cData['estado_cultivo'] === 'positivo_identificado')
-                                <div class="animate-fadeIn">
-                                    <label
-                                        class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Germen
-                                        / Cepa Bacteriana Aislada</label>
-                                    <input type="text"
-                                        wire:model="cultivos_data.{{ $id_analisis }}.cepa_bacteriana"
-                                        class="block w-full bg-white border border-gray-300 rounded-xl p-3 text-sm font-bold text-gray-900 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner"
-                                        placeholder="Ej: Escherichia coli, Staphylococcus aureus...">
-                                </div>
-                            @endif
+                            <div x-show="estado === 'positivo_identificado'" x-cloak
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                x-transition:enter-end="opacity-100 transform translate-y-0">
+                                <label
+                                    class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Germen
+                                    / Cepa Bacteriana Aislada</label>
+                                <input type="text" wire:model="cultivos_data.{{ $id_analisis }}.cepa_bacteriana"
+                                    class="block w-full bg-white border border-gray-300 rounded-xl p-3 text-sm font-bold text-gray-900 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner"
+                                    placeholder="Ej: Escherichia coli, Staphylococcus aureus...">
+                            </div>
                         </div>
 
-                        @if ($cData['estado_cultivo'] === 'positivo_identificado')
-                            <div class="pt-5 border-t border-gray-100 animate-fadeIn">
-                                <h3
-                                    class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                    <i class="fas fa-shield-virus text-emerald-600"></i>
-                                    Prueba de Susceptibilidad Antibiótica (Antibiograma)
-                                </h3>
+                        <div x-show="estado === 'positivo_identificado'" x-cloak
+                            x-transition:enter="transition ease-out duration-300 delay-75"
+                            x-transition:enter-start="opacity-0 transform -translate-y-2"
+                            x-transition:enter-end="opacity-100 transform translate-y-0"
+                            class="pt-5 border-t border-gray-100">
 
-                                <div
-                                    class="max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar border border-gray-100 rounded-xl">
-                                    <table class="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr
-                                                class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b uppercase tracking-wider">
-                                                <th class="p-3">Antibiótico</th>
-                                                <th class="p-3 text-center w-48">Nivel de Susceptibilidad</th>
+                            <h3
+                                class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <i class="fas fa-shield-virus text-emerald-600"></i> Prueba de Susceptibilidad
+                                Antibiótica (Antibiograma)
+                            </h3>
+
+                            <div
+                                class="max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar border border-gray-100 rounded-xl">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr
+                                            class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b uppercase tracking-wider sticky top-0 z-10">
+                                            <th class="p-3">Antibiótico</th>
+                                            <th class="p-3 text-center w-48">Nivel de Susceptibilidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 text-xs font-semibold text-gray-700">
+                                        @foreach ($antibioticos_disponibles as $anti)
+                                            <tr class="hover:bg-gray-50/50"
+                                                wire:key="anti-{{ $id_analisis }}-{{ $anti->id }}">
+                                                <td class="p-3 font-bold text-gray-800">{{ $anti->nombre_antibiotico }}
+                                                </td>
+                                                <td class="p-3">
+                                                    <div class="flex justify-center gap-2">
+                                                        <label class="cursor-pointer">
+                                                            <input type="radio"
+                                                                wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
+                                                                value="S" class="sr-only peer">
+                                                            <span
+                                                                class="w-8 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 text-[10px] font-black peer-checked:bg-green-100 peer-checked:border-green-400 peer-checked:text-green-700 transition-all">S</span>
+                                                        </label>
+                                                        <label class="cursor-pointer">
+                                                            <input type="radio"
+                                                                wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
+                                                                value="I" class="sr-only peer">
+                                                            <span
+                                                                class="w-8 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 text-[10px] font-black peer-checked:bg-amber-100 peer-checked:border-amber-400 peer-checked:text-amber-700 transition-all">I</span>
+                                                        </label>
+                                                        <label class="cursor-pointer">
+                                                            <input type="radio"
+                                                                wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
+                                                                value="R" class="sr-only peer">
+                                                            <span
+                                                                class="w-8 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 text-[10px] font-black peer-checked:bg-red-100 peer-checked:border-red-400 peer-checked:text-red-700 transition-all">R</span>
+                                                        </label>
+                                                        <button type="button"
+                                                            wire:click="$set('cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}', '')"
+                                                            class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors">
+                                                            <i class="fas fa-times text-[10px]"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100 text-xs font-semibold text-gray-700">
-                                            @foreach ($antibioticos_disponibles as $anti)
-                                                <tr class="hover:bg-gray-50/50">
-                                                    <td class="p-3 font-bold text-gray-800">
-                                                        {{ $anti->nombre_antibiotico }}</td>
-                                                    <td class="p-3">
-                                                        <div class="flex justify-center gap-2">
-                                                            <label class="cursor-pointer">
-                                                                <input type="radio"
-                                                                    wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
-                                                                    value="S" class="sr-only peer">
-                                                                <span
-                                                                    class="w-8 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 text-[10px] font-black peer-checked:bg-green-100 peer-checked:border-green-400 peer-checked:text-green-700 transition-all">S</span>
-                                                            </label>
-                                                            <label class="cursor-pointer">
-                                                                <input type="radio"
-                                                                    wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
-                                                                    value="I" class="sr-only peer">
-                                                                <span
-                                                                    class="w-8 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 text-[10px] font-black peer-checked:bg-amber-100 peer-checked:border-amber-400 peer-checked:text-amber-700 transition-all">I</span>
-                                                            </label>
-                                                            <label class="cursor-pointer">
-                                                                <input type="radio"
-                                                                    wire:model="cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}"
-                                                                    value="R" class="sr-only peer">
-                                                                <span
-                                                                    class="w-8 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 text-[10px] font-black peer-checked:bg-red-100 peer-checked:border-red-400 peer-checked:text-red-700 transition-all">R</span>
-                                                            </label>
-                                                            <button type="button"
-                                                                wire:click="$set('cultivos_data.{{ $id_analisis }}.antibiograma.{{ $anti->id }}', '')"
-                                                                class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                                                                <i class="fas fa-times text-[10px]"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
-                        @endif
+                        </div>
 
                         <div class="mt-6 pt-5 border-t border-gray-100 flex items-center justify-end gap-3">
                             <button type="button" wire:click="previsualizarCultivo({{ $id_analisis }})"
@@ -223,20 +229,21 @@
         @endif
     @endforeach
 
-    @if ($mostrarModalPreview && $analisis_a_guardar !== null)
-        @php
-            $previewData = $cultivos_data[$analisis_a_guardar];
-        @endphp
-        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
-            aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" wire:click="cerrarModal">
-                </div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+    <div class="fixed inset-0 z-50 overflow-y-auto {{ $mostrarModalPreview ? '' : 'hidden' }}"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 
-                <div
-                    class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" wire:click="cerrarModal"></div>
 
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div
+                class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full relative z-10 animate-fadeIn">
+
+                @if ($analisis_a_guardar !== null && isset($cultivos_data[$analisis_a_guardar]))
+                    @php
+                        $previewData = $cultivos_data[$analisis_a_guardar];
+                    @endphp
                     <div class="bg-emerald-600 px-6 py-4 flex items-center justify-between">
                         <h3 class="text-lg font-bold text-white flex items-center gap-2" id="modal-title">
                             <i class="fas fa-search"></i> Previsualización: {{ $previewData['nombre_examen'] }}
@@ -262,30 +269,112 @@
                             </p>
 
                             @if ($previewData['estado_cultivo'] === 'positivo_identificado')
-                                <p class="mb-2 text-gray-600"><strong>Germen Aislado:</strong> <span
+                                <p class="mb-3 text-gray-600"><strong>Germen Aislado:</strong> <span
                                         class="font-bold text-gray-900">{{ $previewData['cepa_bacteriana'] ?: 'No especificado' }}</span>
                                 </p>
 
                                 @php
-                                    $conteoAntibiograma = count(array_filter($previewData['antibiograma']));
+                                    $antibiogramaFiltrado = array_filter($previewData['antibiograma']);
+                                    $conteoAntibiograma = count($antibiogramaFiltrado);
                                 @endphp
-                                <p class="text-gray-600"><strong>Antibiograma:</strong> Se testearon <span
-                                        class="font-bold">{{ $conteoAntibiograma }}</span> antibióticos.</p>
+
+                                <div class="mt-4 pt-4 border-t border-gray-200">
+                                    <p class="text-gray-600 mb-3"><strong>Antibiograma:</strong> Se testearon <span
+                                            class="font-bold">{{ $conteoAntibiograma }}</span> antibióticos.</p>
+
+                                    @if ($conteoAntibiograma > 0)
+                                        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                            <table class="w-full text-left text-xs">
+                                                <thead
+                                                    class="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase tracking-wider">
+                                                    <tr>
+                                                        <th class="py-2.5 px-4 font-bold">Antibiótico</th>
+                                                        <th class="py-2.5 px-4 font-bold text-center">Interpretación
+                                                            Clínica</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100">
+                                                    @foreach ($antibiogramaFiltrado as $antiId => $resultado)
+                                                        @php
+                                                            $antibiotico = $antibioticos_disponibles->firstWhere(
+                                                                'id',
+                                                                $antiId,
+                                                            );
+                                                            $nombreAnti = $antibiotico
+                                                                ? $antibiotico->nombre_antibiotico
+                                                                : 'Desconocido';
+
+                                                            $claseColor = '';
+                                                            $textoResultado = '';
+
+                                                            if ($resultado === 'S') {
+                                                                $claseColor =
+                                                                    'bg-green-50 text-green-700 border-green-200';
+                                                                $textoResultado = 'Sensible (S)';
+                                                            } elseif ($resultado === 'I') {
+                                                                $claseColor =
+                                                                    'bg-amber-50 text-amber-700 border-amber-200';
+                                                                $textoResultado = 'Intermedio (I)';
+                                                            } elseif ($resultado === 'R') {
+                                                                $claseColor = 'bg-red-50 text-red-700 border-red-200';
+                                                                $textoResultado = 'Resistente (R)';
+                                                            }
+                                                        @endphp
+                                                        <tr class="hover:bg-gray-50 transition-colors">
+                                                            <td class="py-2.5 px-4 font-bold text-gray-700">
+                                                                {{ $nombreAnti }}</td>
+                                                            <td class="py-2.5 px-4 text-center">
+                                                                <span
+                                                                    class="inline-block px-2.5 py-1 rounded-md text-[10px] font-black tracking-wide border {{ $claseColor }}">
+                                                                    {{ $textoResultado }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @endif
+                                </div>
                             @endif
                         </div>
 
-                        <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-4">
+                        <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4">
                             <h4
-                                class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <i class="fas fa-envelope"></i> Notificación Automática al Paciente
+                                class="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <i class="fas fa-envelope-open-text"></i> Notificación de Resultados
                             </h4>
-                            <label class="block text-xs text-gray-600 mb-1">Correo Electrónico (Puede actualizarlo
-                                aquí):</label>
-                            <input type="email" wire:model="email_paciente"
-                                class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="paciente@ejemplo.com">
-                            <p class="text-[10px] text-gray-500 mt-2">Si todos los exámenes de la orden concluyen hoy,
-                                se enviará el PDF oficial a este correo.</p>
+                            <p class="text-[11px] text-gray-600 mb-4">
+                                Para poder finalizar el informe y firmarlo, el sistema requiere registrar <strong>por lo
+                                    menos un correo electrónico</strong> válido (sea del Paciente/Responsable o del
+                                Médico).
+                            </p>
+
+                            @if (session()->has('error_email'))
+                                <div
+                                    class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-r-lg text-xs font-bold animate-pulse">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i> {{ session('error_email') }}
+                                </div>
+                            @endif
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-700 font-bold mb-1">
+                                        Correo del {{ ucfirst($tipo_email_paciente) }}:
+                                    </label>
+                                    <input type="email" wire:model="email_paciente"
+                                        class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-emerald-500 focus:border-emerald-500"
+                                        placeholder="paciente@ejemplo.com">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-700 font-bold mb-1">
+                                        Correo Médico Solicitante:
+                                    </label>
+                                    <input type="email" wire:model="email_medico"
+                                        class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-emerald-500 focus:border-emerald-500"
+                                        placeholder="medico@ejemplo.com">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -305,11 +394,11 @@
                             </span>
                         </button>
                     </div>
+                @endif
 
-                </div>
             </div>
         </div>
-    @endif
+    </div>
 
     <style>
         .custom-scrollbar::-webkit-scrollbar {
@@ -329,20 +418,24 @@
             background: #94a3b8;
         }
 
+        [x-cloak] {
+            display: none !important;
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(5px);
+                transform: translateY(10px) scale(0.95);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
         .animate-fadeIn {
-            animation: fadeIn 0.3s ease-out forwards;
+            animation: fadeIn 0.2s ease-out forwards;
         }
     </style>
 </div>

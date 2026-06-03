@@ -4,16 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Categoria extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre'];
+    protected $fillable = ['nombre', 'es_cultivo'];
 
-    public function tiposAnalisis(): HasMany
+    public function tiposAnalisis()
     {
-        return $this->hasMany(TipoAnalisis::class, 'categoria_id');
+        return $this->hasMany(TipoAnalisis::class);
     }
 }

@@ -61,9 +61,8 @@
             </h3>
         </div>
 
-        <form wire:submit.prevent="previsualizarResultados">
+        <div>
             <div class="p-6">
-
                 @if (count($valores) === 0)
                     <div class="text-center py-12">
                         <i class="fas fa-bacteria text-4xl text-gray-300 mb-4"></i>
@@ -84,7 +83,8 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 @foreach ($valores as $analisis_id => $data)
-                                    <tr class="hover:bg-gray-50 transition-colors group">
+                                    <tr class="hover:bg-gray-50 transition-colors group"
+                                        wire:key="fila-analisis-{{ $analisis_id }}">
 
                                         <td class="py-4 align-middle">
                                             <p class="font-bold text-gray-800">{{ $data['nombre'] }}</p>
@@ -102,14 +102,14 @@
                                         </td>
 
                                         <td class="py-4 align-middle pr-4">
-
                                             @if ($data['tipo'] === 'cualitativo' && count($data['opciones_cualitativas']) > 0)
                                                 <select wire:model.live="valores.{{ $analisis_id }}.valor"
                                                     class="block w-full bg-purple-50 border border-purple-200 text-purple-900 rounded-lg p-2.5 font-bold focus:ring-purple-500 focus:border-purple-500 transition-colors cursor-pointer">
                                                     <option value="">Seleccione resultado...</option>
-                                                    @foreach ($data['opciones_cualitativas'] as $opcion)
-                                                        <option value="{{ $opcion }}">{{ $opcion }}
-                                                        </option>
+                                                    @foreach ($data['opciones_cualitativas'] as $index => $opcion)
+                                                        <option value="{{ $opcion }}"
+                                                            wire:key="opt-{{ $analisis_id }}-{{ $index }}">
+                                                            {{ $opcion }}</option>
                                                     @endforeach
                                                 </select>
                                             @else
@@ -134,21 +134,20 @@
                                                     class="text-red-500 text-xs mt-1 block font-medium">{{ $message }}</span>
                                             @enderror
                                         </td>
+
                                         <td class="py-4 align-middle">
                                             @if ($data['tipo'] === 'numerico')
-                                                <!-- SELECTOR PARA PRUEBAS NUMÉRICAS -->
                                                 <select wire:model="valores.{{ $analisis_id }}.alerta"
                                                     class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-purple-500 focus:border-purple-500 transition-colors
-            {{ $data['alerta'] === 'normal' ? 'text-green-600' : '' }}
-            {{ $data['alerta'] === 'alto' || $data['alerta'] === 'bajo' ? 'text-amber-600' : '' }}
-            {{ $data['alerta'] === 'critico' ? 'text-red-600 font-bold bg-red-50' : '' }}">
+                                                    {{ $data['alerta'] === 'normal' ? 'text-green-600' : '' }}
+                                                    {{ $data['alerta'] === 'alto' || $data['alerta'] === 'bajo' ? 'text-amber-600' : '' }}
+                                                    {{ $data['alerta'] === 'critico' ? 'text-red-600 font-bold bg-red-50' : '' }}">
                                                     <option value="normal">✅ Normal</option>
                                                     <option value="alto">⬆️ Alto</option>
                                                     <option value="bajo">⬇️ Bajo</option>
                                                     <option value="critico">🚨 Crítico</option>
                                                 </select>
                                             @else
-                                                <!-- LÓGICA INTELIGENTE PARA PRUEBAS CUALITATIVAS -->
                                                 @php
                                                     $nombreNormalizado = strtolower($data['nombre']);
                                                     $esEstadoFisiologico =
@@ -158,17 +157,15 @@
                                                 @endphp
 
                                                 @if ($esEstadoFisiologico)
-                                                    <!-- EMBARAZOS Y GRUPOS SANGUÍNEOS: Solo un distintivo amigable, sin alertas rojas -->
                                                     <div
                                                         class="block w-full bg-blue-50 text-blue-700 border border-blue-200 rounded-lg p-2.5 text-sm font-bold text-center shadow-inner">
                                                         <i class="fas fa-check-circle mr-1"></i> Registrado
                                                     </div>
                                                 @else
-                                                    <!-- INFECCIOSAS (VIH, etc.): Cambiamos "Anormal" por términos médicos adecuados -->
                                                     <select wire:model="valores.{{ $analisis_id }}.alerta"
                                                         class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-purple-500 focus:border-purple-500 transition-colors
-                {{ $data['alerta'] === 'normal' ? 'text-green-600' : '' }}
-                {{ $data['alerta'] === 'critico' ? 'text-red-600 font-bold bg-red-50' : '' }}">
+                                                        {{ $data['alerta'] === 'normal' ? 'text-green-600' : '' }}
+                                                        {{ $data['alerta'] === 'critico' ? 'text-red-600 font-bold bg-red-50' : '' }}">
                                                         <option value="normal">✅ No Reactivo / Negativo</option>
                                                         <option value="critico">🚨 Reactivo / Atención</option>
                                                     </select>
@@ -185,6 +182,7 @@
                                                 @endif
                                             @endif
                                         </td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -199,107 +197,155 @@
                 </a>
 
                 @if (count($valores) > 0)
-                    <button type="submit" wire:loading.attr="disabled"
+                    <button type="button" wire:click="previsualizarResultados" wire:loading.attr="disabled"
                         class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2 disabled:opacity-70 text-sm">
-                        <span wire:loading.remove wire:target="guardarResultados">
-                            <i class="fas fa-save"></i> Guardar Resultados
+                        <span wire:loading.remove wire:target="previsualizarResultados">
+                            <i class="fas fa-search"></i> Previsualizar Resultados
                         </span>
-                        <span wire:loading wire:target="guardarResultados">
+                        <span wire:loading wire:target="previsualizarResultados">
                             <i class="fas fa-spinner fa-spin"></i> Procesando...
                         </span>
                     </button>
                 @endif
             </div>
-        </form>
+        </div>
     </div>
-    @if ($mostrarModalPreview)
-        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" wire:click="cerrarModal">
+
+    <div class="fixed inset-0 z-50 overflow-y-auto {{ $mostrarModalPreview ? '' : 'hidden' }}"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" wire:click="cerrarModal"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div
+                class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full relative z-10 animate-fadeIn">
+
+                <div class="bg-purple-600 px-6 py-4 flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2" id="modal-title">
+                        <i class="fas fa-search"></i> Previsualización y Firma
+                    </h3>
+                    <button wire:click="cerrarModal" class="text-purple-200 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
 
-                <div
-                    class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white px-6 pt-5 pb-4">
+                    <p class="text-sm text-gray-500 mb-4">Verifique que los valores ingresados son correctos antes de
+                        firmar el documento.</p>
 
-                    <div class="bg-purple-600 px-6 py-4 flex items-center justify-between">
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2" id="modal-title">
-                            <i class="fas fa-search"></i> Previsualización y Firma
-                        </h3>
-                        <button wire:click="cerrarModal" class="text-purple-200 hover:text-white transition-colors">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-
-                    <div class="bg-white px-6 pt-5 pb-4">
-                        <p class="text-sm text-gray-500 mb-4">Verifique que los valores ingresados son correctos antes
-                            de firmar el documento.</p>
-
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden mb-5">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr class="border-b bg-gray-100 text-gray-600 font-semibold text-xs uppercase">
-                                        <th class="p-3">Examen</th>
-                                        <th class="p-3 text-center">Valor</th>
-                                        <th class="p-3 text-center">Alerta</th>
+                    <div class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden mb-5">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="border-b bg-gray-100 text-gray-600 font-semibold text-xs uppercase">
+                                    <th class="p-3">Examen</th>
+                                    <th class="p-3 text-center">Valor</th>
+                                    <th class="p-3 text-center">Alerta</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                @forelse ($resultados_a_previsualizar as $id => $res)
+                                    <tr class="bg-white" wire:key="prev-{{ $id }}">
+                                        <td class="p-3 font-medium text-gray-800">{{ $res['nombre'] ?? '' }}</td>
+                                        <td class="p-3 text-center font-bold">{{ $res['valor'] ?? '' }} <span
+                                                class="text-xs text-gray-500 font-normal">{{ $res['unidad'] ?? '' }}</span>
+                                        </td>
+                                        <td class="p-3 text-center">
+                                            <span
+                                                class="px-2 py-1 rounded-md text-[10px] font-bold uppercase
+                                                {{ ($res['alerta'] ?? '') === 'normal' ? 'bg-green-50 text-green-700' : '' }}
+                                                {{ ($res['alerta'] ?? '') === 'alto' || ($res['alerta'] ?? '') === 'bajo' ? 'bg-amber-50 text-amber-700' : '' }}
+                                                {{ ($res['alerta'] ?? '') === 'critico' ? 'bg-red-50 text-red-700' : '' }}">
+                                                {{ $res['alerta'] ?? '' }}
+                                            </span>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    @foreach ($resultados_a_previsualizar as $res)
-                                        <tr class="bg-white">
-                                            <td class="p-3 font-medium text-gray-800">{{ $res['nombre'] }}</td>
-                                            <td class="p-3 text-center font-bold">{{ $res['valor'] }} <span
-                                                    class="text-xs text-gray-500 font-normal">{{ $res['unidad'] }}</span>
-                                            </td>
-                                            <td class="p-3 text-center">
-                                                <span
-                                                    class="px-2 py-1 rounded-md text-[10px] font-bold uppercase
-                                                    {{ $res['alerta'] === 'normal' ? 'bg-green-50 text-green-700' : '' }}
-                                                    {{ $res['alerta'] === 'alto' || $res['alerta'] === 'bajo' ? 'bg-amber-50 text-amber-700' : '' }}
-                                                    {{ $res['alerta'] === 'critico' ? 'bg-red-50 text-red-700' : '' }}">
-                                                    {{ $res['alerta'] }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-4">
-                            <h4
-                                class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <i class="fas fa-envelope"></i> Notificación Automática al Paciente
-                            </h4>
-                            <label class="block text-xs text-gray-600 mb-1">Correo Electrónico (Puede actualizarlo
-                                aquí):</label>
-                            <input type="email" wire:model="email_paciente"
-                                class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="paciente@ejemplo.com">
-                            <p class="text-[10px] text-gray-500 mt-2">Si el campo está vacío, el PDF no se enviará,
-                                pero la orden se cerrará normalmente.</p>
-                        </div>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="p-4 text-center text-gray-500">Sin datos para
+                                            previsualizar.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
-                        <button type="button" wire:click="cerrarModal"
-                            class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm">
-                            Volver a Editar
-                        </button>
+                    <div class="bg-purple-50/50 border border-purple-100 rounded-xl p-4">
+                        <h4
+                            class="text-xs font-bold text-purple-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fas fa-envelope-open-text"></i> Notificación de Resultados
+                        </h4>
+                        <p class="text-[11px] text-gray-600 mb-4">
+                            Para poder finalizar el informe y firmarlo, el sistema requiere registrar <strong>por lo
+                                menos un correo electrónico</strong> válido (sea del Paciente/Responsable o del Médico).
+                        </p>
 
-                        <button type="button" wire:click="confirmarYEnviar" wire:loading.attr="disabled"
-                            class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2 disabled:opacity-70 text-sm">
-                            <span wire:loading.remove wire:target="confirmarYEnviar">
-                                <i class="fas fa-check-double"></i> Confirmar, Firmar y Enviar
-                            </span>
-                            <span wire:loading wire:target="confirmarYEnviar">
-                                <i class="fas fa-spinner fa-spin"></i> Procesando...
-                            </span>
-                        </button>
+                        @if (session()->has('error_email'))
+                            <div
+                                class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-r-lg text-xs font-bold animate-pulse">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> {{ session('error_email') }}
+                            </div>
+                        @endif
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-700 font-bold mb-1">
+                                    Correo del {{ ucfirst($tipo_email_paciente) }}:
+                                </label>
+                                <input type="email" wire:model="email_paciente"
+                                    class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-purple-500 focus:border-purple-500"
+                                    placeholder="paciente@ejemplo.com">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-700 font-bold mb-1">
+                                    Correo Médico Solicitante:
+                                </label>
+                                <input type="email" wire:model="email_medico"
+                                    class="block w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm font-medium focus:ring-purple-500 focus:border-purple-500"
+                                    placeholder="medico@ejemplo.com">
+                            </div>
+                        </div>
                     </div>
 
                 </div>
+
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                    <button type="button" wire:click="cerrarModal"
+                        class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm">
+                        Volver a Editar
+                    </button>
+
+                    <button type="button" wire:click="confirmarYEnviar" wire:loading.attr="disabled"
+                        class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2 disabled:opacity-70 text-sm">
+                        <span wire:loading.remove wire:target="confirmarYEnviar">
+                            <i class="fas fa-check-double"></i> Confirmar, Firmar y Enviar
+                        </span>
+                        <span wire:loading wire:target="confirmarYEnviar">
+                            <i class="fas fa-spinner fa-spin"></i> Procesando...
+                        </span>
+                    </button>
+                </div>
+
             </div>
         </div>
-    @endif
+    </div>
+
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+    </style>
 </div>

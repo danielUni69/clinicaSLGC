@@ -11,7 +11,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body {
@@ -75,9 +74,8 @@
                         <!-- Botón Cerrar Sesión Visible -->
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
-                            <button type="submit" 
-                                    onclick="return confirm('¿Estás seguro de cerrar sesión?')"
-                                    class="flex items-center space-x-2 text-red-400 hover:text-red-500 transition">
+                            <button type="submit" onclick="return confirm('¿Estás seguro de cerrar sesión?')"
+                                class="flex items-center space-x-2 text-red-400 hover:text-red-500 transition">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span class="text-sm font-medium">Cerrar Sesión</span>
                             </button>
@@ -85,8 +83,7 @@
 
                         <!-- Dropdown Perfil -->
                         <div class="relative" x-data="{ open: false }">
-                            <div @click="open = !open" 
-                                 class="flex items-center space-x-3 cursor-pointer select-none">
+                            <div @click="open = !open" class="flex items-center space-x-3 cursor-pointer select-none">
                                 <div class="text-right">
                                     <p class="text-sm font-medium text-white flex items-center justify-end space-x-2">
                                         <span>{{ Auth::user()->name }}</span>
@@ -98,27 +95,27 @@
                                     </p>
                                     <p class="text-xs text-gray-400">{{ ucfirst(Auth::user()->role) }}</p>
                                 </div>
-                                <div class="w-8 h-8 clinic-gradient rounded-full flex items-center justify-center shadow-lg cursor-pointer">
+                                <div
+                                    class="w-8 h-8 clinic-gradient rounded-full flex items-center justify-center shadow-lg cursor-pointer">
                                     <span class="text-white font-bold text-sm">{{ substr(Auth::user()->name, 0, 2) }}</span>
                                 </div>
                             </div>
 
-                            <div x-show="open" 
-                                 @click.outside="open = false"
-                                 class="dropdown-menu right-0 mt-2"
-                                 style="display: none;">
+                            <div x-show="open" @click.outside="open = false" class="dropdown-menu right-0 mt-2"
+                                style="display: none;">
                                 <div class="px-4 py-3 border-b border-gray-600">
                                     <p class="text-sm text-white font-medium">{{ Auth::user()->name }}</p>
                                     <p class="text-xs text-gray-400">{{ Auth::user()->email }}</p>
                                 </div>
                                 <a href="{{ route('profile.show') }}"
-                                   class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition">
+                                    class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition">
                                     <i class="fas fa-user-md mr-2 w-4"></i> Mi Perfil
                                 </a>
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">
+                        <a href="{{ route('login') }}"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">
                             <i class="fas fa-sign-in-alt mr-2"></i> Iniciar Sesión
                         </a>
                     @endauth
@@ -131,24 +128,28 @@
                         <div class="flex space-x-1">
 
                             @if (in_array(Auth::user()->role, ['administrador', 'recepcionista']))
-                                <a href="{{ route('create-servicio') }}" class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('create-servicio') ? 'active' : '' }}">
+                                <a href="{{ route('create-servicio') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('create-servicio') ? 'active' : '' }}">
                                     <i class="fas fa-cash-register w-4 text-green-400"></i>
                                     <span class="text-sm">Punto de Caja</span>
                                 </a>
 
-                                <a href="{{ route('pacientes.listar') }}" class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.listar*') ? 'active' : '' }}">
+                                <a href="{{ route('pacientes.listar') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.listar*') ? 'active' : '' }}">
                                     <i class="fas fa-users w-4 text-blue-400"></i>
                                     <span class="text-sm">Pacientes</span>
                                 </a>
 
-                                
 
-                                <a href="{{ route('pacientes.historial') }}" class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.historial') ? 'active' : '' }}">
+
+                                <a href="{{ route('pacientes.historial') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('pacientes.historial') ? 'active' : '' }}">
                                     <i class="fas fa-notes-medical w-4 text-indigo-400"></i>
                                     <span class="text-sm">Historial Clínico</span>
                                 </a>
 
-                                <a href="{{ route('medicos.solicitantes') }}" class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('medicos.solicitantes') ? 'active' : '' }}">
+                                <a href="{{ route('medicos.solicitantes') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('medicos.solicitantes') ? 'active' : '' }}">
                                     <i class="fas fa-user-md w-4 text-indigo-400"></i>
                                     <span class="text-sm">Médicos</span>
                                 </a>
@@ -156,17 +157,16 @@
 
 
                             @if (in_array(Auth::user()->role, ['administrador', 'bioquimico']))
-                                <a href="{{ route('laboratorio.panel') }}" class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('laboratorio.*') ? 'active' : '' }}">
+                                <a href="{{ route('laboratorio.panel') }}"
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('laboratorio.*') ? 'active' : '' }}">
                                     <i class="fas fa-microscope w-4 text-purple-400"></i>
                                     <span class="text-sm">Área de Laboratorio</span>
                                 </a>
                             @endif
 
                             @if (in_array(Auth::user()->role, ['administrador', 'bioquimico']))
-                                
-
                                 <a href="{{ route('cultivos') }}"
-                                class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('cultivos') ? 'active' : '' }}">
+                                    class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('cultivos') ? 'active' : '' }}">
                                     <i class="fas fa-flask w-4 text-green-400"></i>
                                     <span class="text-sm">Gestión de Cultivos</span>
                                 </a>
@@ -182,30 +182,30 @@
                                         <i class="fas fa-chevron-down w-3 h-3 ml-1 text-gray-400"></i>
                                     </button>
 
-                                    <div x-show="adminOpen" 
-                                         @click.outside="adminOpen = false"
-                                         class="dropdown-menu left-0 mt-0 w-56 py-2"
-                                         style="display: none;">
-                                        
-                                        <a href="{{ route('admin.catalogo') }}" 
-                                           class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
+                                    <div x-show="adminOpen" @click.outside="adminOpen = false"
+                                        class="dropdown-menu left-0 mt-0 w-56 py-2" style="display: none;">
+
+                                        <a href="{{ route('admin.catalogo') }}"
+                                            class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
                                             <i class="fas fa-vials w-4 mr-2 text-blue-400"></i> Catálogo de Exámenes
                                         </a>
                                         <a href="{{ route('admin.antibioticos') }}"
-                                           class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
-                                            <i class="fas fa-pills w-4 mr-2 text-emerald-400"></i> Inventario de Antibióticos
+                                            class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
+                                            <i class="fas fa-pills w-4 mr-2 text-emerald-400"></i> Inventario de
+                                            Antibióticos
                                         </a>
                                         <hr class="border-gray-600 my-1">
                                         <a href="{{ route('admin.users.list') }}"
-                                           class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
+                                            class="block px-4 py-2 text-gray-200 hover:bg-gray-700 hover:text-white transition text-sm">
                                             <i class="fas fa-users-cog w-4 mr-2 text-yellow-400"></i> Gestión de Usuarios
                                         </a>
 
                                         {{-- Botón Nuevo: Turnos (Recepción / Administrador) --}}
-                                <a href="{{ route('turnos.index') }}" class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('turnos.*') ? 'active' : '' }}">
-                                    <i class="fas fa-calendar-check w-4 text-teal-400"></i>
-                                    <span class="text-sm">Turnos</span>
-                                </a>
+                                        <a href="{{ route('turnos.index') }}"
+                                            class="nav-item flex items-center space-x-2 px-4 py-3 text-gray-200 rounded-t-lg {{ request()->routeIs('turnos.*') ? 'active' : '' }}">
+                                            <i class="fas fa-calendar-check w-4 text-teal-400"></i>
+                                            <span class="text-sm">Turnos</span>
+                                        </a>
 
                                     </div>
                                 </div>
@@ -217,7 +217,7 @@
             @endauth
         </header>
 
-        <main class="flex-1 overflow-y-auto bg-gray-900">
+        <main class="flex-1 overflow-y-auto bg-white">
             <div class="relative">
                 {{ $slot }}
             </div>
@@ -228,7 +228,6 @@
     @yield('scripts')
 
     <!-- Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
 
 </html>

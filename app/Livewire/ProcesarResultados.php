@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Mail\ResultadosLaboratorioMail;
+use App\Models\MedicoSolicitante;
+use App\Models\Responsable;
 use App\Models\ResultadoAnalisis;
 use App\Models\Servicio;
 use Illuminate\Support\Facades\Auth;
@@ -24,10 +26,14 @@ class ProcesarResultados extends Component
 
     public $valores = [];
 
-    // Variables para el Modal y Correo
+    // --- Variables para el Modal y Correos ---
     public $mostrarModalPreview = false;
 
+    public $tipo_email_paciente = 'paciente'; // Puede ser 'paciente' o 'responsable'
+
     public $email_paciente = '';
+
+    public $email_medico = '';
 
     public $resultados_a_previsualizar = [];
 
@@ -40,8 +46,25 @@ class ProcesarResultados extends Component
         $this->paciente_ci = $modeloServicio->paciente->ci ?? 'Sin registro';
         $this->fecha_servicio = $modeloServicio->created_at ? $modeloServicio->created_at->format('d/m/Y H:i') : 'Sin fecha';
         $this->paciente_sexo = $modeloServicio->paciente->sexo ?? 'M';
-        $this->email_paciente = $modeloServicio->paciente->email ?? '';
 
+        // 1. Lógica para el correo del Paciente o Responsable
+        $paciente = $modeloServicio->paciente;
+        if ($paciente->responsable_id) {
+            $responsable = Responsable::find($paciente->responsable_id);
+            $this->email_paciente = $responsable ? $responsable->correo : '';
+            $this->tipo_email_paciente = 'responsable';
+        } else {
+            $this->email_paciente = $paciente->email ?? '';
+            $this->tipo_email_paciente = 'paciente';
+        }
+
+        // 2. Lógica para el correo del Médico Solicitante
+        if ($modeloServicio->medico_id) {
+            $medico = MedicoSolicitante::find($modeloServicio->medico_id);
+            $this->email_medico = $medico ? $medico->correo : '';
+        }
+
+        // Cargar parámetros a evaluar
         foreach ($modeloServicio->tiposAnalisis as $analisis) {
             $nombreCat = strtolower($analisis->categoria->nombre ?? '');
             if (str_contains($nombreCat, 'microbiolog') || str_contains($nombreCat, 'cultivo')) {
@@ -56,7 +79,6 @@ class ProcesarResultados extends Component
             $minimo = $esFemenino ? $analisis->rango_min_femenino : $analisis->rango_min_masculino;
             $maximo = $esFemenino ? $analisis->rango_max_femenino : $analisis->rango_max_masculino;
 
-            // Motor de opciones cualitativas
             $opciones_cualitativas = [];
             if ($analisis->tipo_parámetro === 'cualitativo') {
                 $ref = strtolower(trim($analisis->valor_referencia_cualitativo ?? ''));
@@ -161,21 +183,40 @@ class ProcesarResultados extends Component
     public function cerrarModal()
     {
         $this->mostrarModalPreview = false;
+        session()->forget('error_email'); // Limpiar error visual
     }
 
     public function confirmarYEnviar()
     {
         $this->validate([
             'email_paciente' => 'nullable|email|max:255',
+            'email_medico' => 'nullable|email|max:255',
         ]);
+
+        // REGLA DE ORO: No puede finalizar si todos los correos están vacíos
+        if (empty(trim($this->email_paciente)) && empty(trim($this->email_medico))) {
+            session()->flash('error_email', 'Debe asignar obligatoriamente al menos un correo (Paciente/Responsable o Médico) para enviar los resultados.');
+
+            return;
+        }
 
         DB::beginTransaction();
 
         try {
-            if (! empty($this->email_paciente)) {
-                $this->servicio->paciente->update(['email' => $this->email_paciente]);
+            // Actualizar correos en la base de datos
+            $paciente = $this->servicio->paciente;
+
+            if ($this->tipo_email_paciente === 'responsable' && $paciente->responsable_id) {
+                Responsable::where('id', $paciente->responsable_id)->update(['correo' => $this->email_paciente]);
+            } else {
+                $paciente->update(['email' => $this->email_paciente]);
             }
 
+            if ($this->servicio->medico_id && ! empty($this->email_medico)) {
+                MedicoSolicitante::where('id', $this->servicio->medico_id)->update(['correo' => $this->email_medico]);
+            }
+
+            // Registrar los resultados transcritos
             foreach ($this->valores as $analisis_id => $data) {
                 $valorLimpio = trim($data['valor']);
                 if ($valorLimpio !== '') {
@@ -188,6 +229,7 @@ class ProcesarResultados extends Component
                 }
             }
 
+            // Comprobar estado del Kanban
             $analisisRutinaIds = $this->servicio->tiposAnalisis()->whereDoesntHave('categoria', function ($q) {
                 $q->where('nombre', 'like', '%microbiolog%')->orWhere('nombre', 'like', '%cultivo%');
             })->pluck('tipos_analisis.id');
@@ -210,14 +252,18 @@ class ProcesarResultados extends Component
                 $mensajeExito = 'Guardado parcial. La orden sigue EN PROCESO.';
             }
 
-            // Ya no guardamos "observaciones_calidad"
             $this->servicio->update([
                 'estado_muestra' => $estado_final,
             ]);
 
-            if ($estado_final === 'completada' && ! empty($this->email_paciente)) {
-                Mail::to($this->email_paciente)->send(new ResultadosLaboratorioMail($this->servicio));
-                $mensajeExito .= ' El PDF fue enviado al correo del paciente.';
+            // Enviar Correo a la lista de destinatarios
+            if ($estado_final === 'completada') {
+                $destinatarios = array_filter([$this->email_paciente, $this->email_medico]); // Elimina campos vacíos
+
+                if (count($destinatarios) > 0) {
+                    Mail::to($destinatarios)->send(new ResultadosLaboratorioMail($this->servicio));
+                    $mensajeExito .= ' El PDF oficial fue enviado correctamente.';
+                }
             }
 
             DB::commit();

@@ -3,24 +3,30 @@
 namespace App\Livewire;
 
 use App\Models\Servicio;
+use Carbon\Carbon;
 use Livewire\Component;
 
 class PanelLaboratorio extends Component
 {
-    // Eliminamos las variables del modal, ya no las necesitamos.
+    // Propiedad para enlazar con el input de fecha
+    public $fechaFiltro;
+
+    public function mount()
+    {
+        // Por defecto, inicializamos con la fecha actual
+        $this->fechaFiltro = Carbon::today()->toDateString();
+    }
 
     public function registrarMuestra($id)
     {
         $servicio = Servicio::find($id);
 
         if ($servicio) {
-            // Pasamos directo a 'recolectada' sin preguntar
             $servicio->update([
                 'estado_muestra' => 'recolectada',
             ]);
 
-            // Un mensaje rápido que desaparece solo
-            session()->flash('mensaje', 'Muestra del paciente '.($servicio->paciente->nombre_completo ?? '').' recepcionada.');
+            session()->flash('mensaje', 'Muestra del paciente '.($servicio->paciente->nombre_completo ?? '').' recepcionada correctamente.');
         }
     }
 
@@ -43,8 +49,10 @@ class PanelLaboratorio extends Component
         $muestras_completadas = Servicio::with($relaciones)
             ->where('estado_pago', 'pagado')
             ->whereIn('estado_muestra', ['completada', 'rechazada'])
+            // Filtramos por la fecha seleccionada en el UI
+            ->whereDate('updated_at', $this->fechaFiltro)
             ->orderBy('updated_at', 'desc')
-            ->take(50)
+            ->take(100) // Límite de seguridad para no saturar la vista
             ->get();
 
         return view('livewire.panel-laboratorio', [

@@ -6,7 +6,9 @@ use App\Mail\ResultadosLaboratorioMail;
 use App\Models\Antibiograma;
 use App\Models\Antibiotico;
 use App\Models\Cultivo;
+use App\Models\MedicoSolicitante;
 use App\Models\ReporteEvolucion;
+use App\Models\Responsable;
 use App\Models\ResultadoAnalisis;
 use App\Models\Servicio;
 use Illuminate\Support\Facades\Auth;
@@ -32,13 +34,16 @@ class ProcesarCultivo extends Component
 
     public $analisis_activo_id = null;
 
-    // --- NUEVAS VARIABLES PARA EL MODAL Y CORREO ---
+    // --- VARIABLES PARA EL MODAL Y CORREO ---
     public $mostrarModalPreview = false;
+
+    public $analisis_a_guardar = null;
+
+    public $tipo_email_paciente = 'paciente'; // 'paciente' o 'responsable'
 
     public $email_paciente = '';
 
-    public $analisis_a_guardar = null; // ID del cultivo que se está previsualizando
-    // -----------------------------------------------
+    public $email_medico = '';
 
     public function mount($id)
     {
@@ -49,14 +54,28 @@ class ProcesarCultivo extends Component
         $this->paciente_ci = $modeloServicio->paciente->ci ?? 'Sin registro';
         $this->fecha_servicio = $modeloServicio->created_at ? $modeloServicio->created_at->format('d/m/Y H:i') : 'Sin fecha';
         $this->paciente_sexo = $modeloServicio->paciente->sexo ?? 'M';
-        $this->email_paciente = $modeloServicio->paciente->email ?? '';
+
+        // 1. Lógica para el correo del Paciente o Responsable
+        $paciente = $modeloServicio->paciente;
+        if ($paciente->responsable_id) {
+            $responsable = Responsable::find($paciente->responsable_id);
+            $this->email_paciente = $responsable ? $responsable->correo : '';
+            $this->tipo_email_paciente = 'responsable';
+        } else {
+            $this->email_paciente = $paciente->email ?? '';
+            $this->tipo_email_paciente = 'paciente';
+        }
+
+        // 2. Lógica para el correo del Médico Solicitante
+        if ($modeloServicio->medico_id) {
+            $medico = MedicoSolicitante::find($modeloServicio->medico_id);
+            $this->email_medico = $medico ? $medico->correo : '';
+        }
 
         $this->antibioticos_disponibles = Antibiotico::where('estado', true)->orderBy('nombre_antibiotico', 'asc')->get();
 
         $analisisCultivos = $modeloServicio->tiposAnalisis->filter(function ($analisis) {
-            $nombreCat = strtolower($analisis->categoria->nombre ?? '');
-
-            return str_contains($nombreCat, 'microbiolog') || str_contains($nombreCat, 'cultivo');
+            return $analisis->categoria && $analisis->categoria->es_cultivo;
         });
 
         if ($analisisCultivos->isEmpty()) {
@@ -125,7 +144,6 @@ class ProcesarCultivo extends Component
         }
     }
 
-    // --- NUEVO: ABRIR EL MODAL ---
     public function previsualizarCultivo($analisis_id)
     {
         $this->analisis_a_guardar = $analisis_id;
@@ -136,22 +154,66 @@ class ProcesarCultivo extends Component
     {
         $this->mostrarModalPreview = false;
         $this->analisis_a_guardar = null;
+        session()->forget('error_email');
     }
 
-    // --- NUEVO: GUARDAR Y ENVIAR DESDE EL MODAL ---
     public function confirmarYEnviar()
     {
-        $this->validate(['email_paciente' => 'nullable|email|max:255']);
+        $this->validate([
+            'email_paciente' => 'nullable|email|max:255',
+            'email_medico' => 'nullable|email|max:255',
+        ]);
 
         $analisis_id = $this->analisis_a_guardar;
         $data = $this->cultivos_data[$analisis_id];
 
+        // REGLA DE ORO: Validar correos si se va a completar el servicio
+        $analisisCultivoIds = $this->servicio->tiposAnalisis->filter(function ($analisis) {
+            return $analisis->categoria && $analisis->categoria->es_cultivo;
+        })->pluck('id');
+
+        $cultivosFinalizadosCount = Cultivo::where('servicio_id', $this->servicio->id)
+            ->whereIn('tipo_analisis_id', $analisisCultivoIds)
+            ->whereIn('estado_cultivo', ['negativo', 'positivo_identificado'])
+            ->count();
+
+        // Evaluamos si este guardado completará todos los cultivos
+        $todosCultivosListosFuturo = ($cultivosFinalizadosCount + ($data['estado_cultivo'] !== 'en_incubacion' ? 1 : 0) >= $analisisCultivoIds->count());
+
+        $analisisRutinaIds = $this->servicio->tiposAnalisis->filter(function ($analisis) {
+            return ! $analisis->categoria || ! $analisis->categoria->es_cultivo;
+        })->pluck('id');
+
+        $rutinaCompletada = true;
+        if ($analisisRutinaIds->isNotEmpty()) {
+            $resultadosRutinaCount = ResultadoAnalisis::where('servicio_id', $this->servicio->id)->whereIn('tipo_analisis_id', $analisisRutinaIds)->count();
+            $rutinaCompletada = ($resultadosRutinaCount === $analisisRutinaIds->count());
+        }
+
+        // Si este guardado va a finalizar el servicio completo, validamos los correos
+        if ($todosCultivosListosFuturo && $rutinaCompletada) {
+            if (empty(trim($this->email_paciente)) && empty(trim($this->email_medico))) {
+                session()->flash('error_email', 'Debe asignar obligatoriamente al menos un correo (Paciente/Responsable o Médico) para enviar los resultados.');
+
+                return;
+            }
+        }
+
         DB::beginTransaction();
         try {
-            if (! empty($this->email_paciente)) {
-                $this->servicio->paciente->update(['email' => $this->email_paciente]);
+            // Actualizar correos en la base de datos
+            $paciente = $this->servicio->paciente;
+            if ($this->tipo_email_paciente === 'responsable' && $paciente->responsable_id) {
+                Responsable::where('id', $paciente->responsable_id)->update(['correo' => $this->email_paciente]);
+            } else {
+                $paciente->update(['email' => $this->email_paciente]);
             }
 
+            if ($this->servicio->medico_id && ! empty($this->email_medico)) {
+                MedicoSolicitante::where('id', $this->servicio->medico_id)->update(['correo' => $this->email_medico]);
+            }
+
+            // Registrar datos del cultivo
             $cultivo = Cultivo::updateOrCreate(
                 ['servicio_id' => $this->servicio->id, 'tipo_analisis_id' => $analisis_id],
                 [
@@ -174,10 +236,6 @@ class ProcesarCultivo extends Component
             }
 
             // MÁQUINA DE ESTADOS KANBAN
-            $analisisCultivoIds = $this->servicio->tiposAnalisis()->whereHas('categoria', function ($query) {
-                $query->where('nombre', 'like', '%microbiolog%')->orWhere('nombre', 'like', '%cultivo%');
-            })->pluck('tipos_analisis.id');
-
             $cultivosFinalizadosCount = Cultivo::where('servicio_id', $this->servicio->id)
                 ->whereIn('tipo_analisis_id', $analisisCultivoIds)
                 ->whereIn('estado_cultivo', ['negativo', 'positivo_identificado'])
@@ -185,24 +243,14 @@ class ProcesarCultivo extends Component
 
             $todosCultivosListos = ($cultivosFinalizadosCount === $analisisCultivoIds->count());
 
-            $analisisRutinaIds = $this->servicio->tiposAnalisis()->whereDoesntHave('categoria', function ($query) {
-                $query->where('nombre', 'like', '%microbiolog%')->orWhere('nombre', 'like', '%cultivo%');
-            })->pluck('tipos_analisis.id');
-
-            $rutinaCompletada = true;
-            if ($analisisRutinaIds->isNotEmpty()) {
-                $resultadosRutinaCount = ResultadoAnalisis::where('servicio_id', $this->servicio->id)->whereIn('tipo_analisis_id', $analisisRutinaIds)->count();
-                $rutinaCompletada = ($resultadosRutinaCount === $analisisRutinaIds->count());
-            }
-
             if ($todosCultivosListos && $rutinaCompletada) {
                 $this->servicio->update(['estado_muestra' => 'completada']);
                 $mensajeFinal = 'Informe microbiológico firmado con éxito. Servicio FINALIZADO.';
 
-                // ENVÍO DE CORREO AUTOMÁTICO
-                if (! empty($this->email_paciente)) {
-                    Mail::to($this->email_paciente)->send(new ResultadosLaboratorioMail($this->servicio));
-                    $mensajeFinal .= ' Se envió el reporte al paciente.';
+                $destinatarios = array_filter([$this->email_paciente, $this->email_medico]);
+                if (count($destinatarios) > 0) {
+                    Mail::to($destinatarios)->send(new ResultadosLaboratorioMail($this->servicio));
+                    $mensajeFinal .= ' El PDF oficial fue enviado correctamente.';
                 }
             } else {
                 $this->servicio->update(['estado_muestra' => 'recolectada']);

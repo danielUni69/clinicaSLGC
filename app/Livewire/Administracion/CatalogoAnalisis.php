@@ -8,17 +8,20 @@ use Livewire\Component;
 
 class CatalogoAnalisis extends Component
 {
-    // --- VARIABLES DE INTERFAZ ---
     public $categoria_seleccionada_id = null;
 
     public $mostrarModalCategoria = false;
 
     public $mostrarModalAnalisis = false;
 
+    public $es_categoria_cultivo = false;
+
     // --- FORMULARIO CATEGORÍA ---
     public $cat_id = null;
 
     public $cat_nombre = '';
+
+    public $cat_es_cultivo = false;
 
     // --- FORMULARIO ANÁLISIS ---
     public $ana_id = null;
@@ -45,7 +48,16 @@ class CatalogoAnalisis extends Component
 
     public function render()
     {
-        $categorias = Categoria::withCount('tiposAnalisis')->orderBy('nombre')->get();
+        // SEPARAMOS LAS CATEGORÍAS EN DOS LISTAS DESDE LA BASE DE DATOS
+        $categoriasNormales = Categoria::where('es_cultivo', false)
+            ->withCount('tiposAnalisis')
+            ->orderBy('nombre')
+            ->get();
+
+        $categoriasCultivo = Categoria::where('es_cultivo', true)
+            ->withCount('tiposAnalisis')
+            ->orderBy('nombre')
+            ->get();
 
         $analisis = [];
         if ($this->categoria_seleccionada_id) {
@@ -56,12 +68,32 @@ class CatalogoAnalisis extends Component
             $analisis = TipoAnalisis::with('categoria')->orderBy('nombre')->get();
         }
 
-        return view('livewire.administracion.catalogo-analisis', compact('categorias', 'analisis'));
+        return view('livewire.administracion.catalogo-analisis', compact('categoriasNormales', 'categoriasCultivo', 'analisis'));
     }
 
     public function seleccionarCategoria($id = null)
     {
         $this->categoria_seleccionada_id = $id;
+    }
+
+    public function updatedAnaCategoriaId($id)
+    {
+        $this->verificarSiEsCultivo($id);
+    }
+
+    private function verificarSiEsCultivo($id)
+    {
+        if ($id) {
+            $cat = Categoria::find($id);
+            $this->es_categoria_cultivo = (bool) $cat->es_cultivo;
+
+            if ($this->es_categoria_cultivo) {
+                $this->ana_tipo_parametro = 'cualitativo';
+                $this->ana_ref_cualitativa = 'N/A';
+            }
+        } else {
+            $this->es_categoria_cultivo = false;
+        }
     }
 
     // ==========================================
@@ -74,9 +106,11 @@ class CatalogoAnalisis extends Component
             $cat = Categoria::find($id);
             $this->cat_id = $cat->id;
             $this->cat_nombre = $cat->nombre;
+            $this->cat_es_cultivo = (bool) $cat->es_cultivo;
         } else {
             $this->cat_id = null;
             $this->cat_nombre = '';
+            $this->cat_es_cultivo = false;
         }
         $this->mostrarModalCategoria = true;
     }
@@ -85,6 +119,7 @@ class CatalogoAnalisis extends Component
     {
         $this->validate([
             'cat_nombre' => 'required|string|max:255|unique:categorias,nombre,'.$this->cat_id,
+            'cat_es_cultivo' => 'boolean',
         ], [
             'cat_nombre.required' => 'El nombre de la categoría es obligatorio.',
             'cat_nombre.unique' => 'Ya existe una categoría con ese nombre.',
@@ -92,9 +127,13 @@ class CatalogoAnalisis extends Component
 
         Categoria::updateOrCreate(
             ['id' => $this->cat_id],
-            ['nombre' => $this->cat_nombre]
+            [
+                'nombre' => $this->cat_nombre,
+                'es_cultivo' => $this->cat_es_cultivo,
+            ]
         );
 
+        $this->reset(['cat_id', 'cat_nombre', 'cat_es_cultivo']);
         $this->mostrarModalCategoria = false;
         session()->flash('mensaje', 'Categoría guardada con éxito.');
     }
@@ -131,6 +170,8 @@ class CatalogoAnalisis extends Component
             $this->ana_rango_min_f = $ana->rango_min_femenino;
             $this->ana_rango_max_f = $ana->rango_max_femenino;
             $this->ana_ref_cualitativa = $ana->valor_referencia_cualitativo;
+
+            $this->verificarSiEsCultivo($this->ana_categoria_id);
         } else {
             $this->ana_id = null;
             $this->ana_categoria_id = $this->categoria_seleccionada_id ?? '';
@@ -143,28 +184,32 @@ class CatalogoAnalisis extends Component
             $this->ana_rango_min_f = '';
             $this->ana_rango_max_f = '';
             $this->ana_ref_cualitativa = '';
+
+            $this->verificarSiEsCultivo($this->ana_categoria_id);
         }
         $this->mostrarModalAnalisis = true;
     }
 
     public function guardarAnalisis()
     {
-        // Reglas dinámicas: Si es numérico exige rangos, si es cualitativo exige referencia
         $rules = [
             'ana_categoria_id' => 'required',
             'ana_nombre' => 'required|string|max:255',
             'ana_costo' => 'required|numeric|min:0',
-            'ana_tipo_parametro' => 'required|in:numerico,cualitativo',
         ];
 
-        if ($this->ana_tipo_parametro === 'numerico') {
-            $rules['ana_unidad_medida'] = 'required|string|max:50';
-            $rules['ana_rango_min_m'] = 'nullable|numeric';
-            $rules['ana_rango_max_m'] = 'nullable|numeric';
-            $rules['ana_rango_min_f'] = 'nullable|numeric';
-            $rules['ana_rango_max_f'] = 'nullable|numeric';
-        } else {
-            $rules['ana_ref_cualitativa'] = 'required|string|max:255';
+        if (! $this->es_categoria_cultivo) {
+            $rules['ana_tipo_parametro'] = 'required|in:numerico,cualitativo';
+
+            if ($this->ana_tipo_parametro === 'numerico') {
+                $rules['ana_unidad_medida'] = 'required|string|max:50';
+                $rules['ana_rango_min_m'] = 'nullable|numeric';
+                $rules['ana_rango_max_m'] = 'nullable|numeric';
+                $rules['ana_rango_min_f'] = 'nullable|numeric';
+                $rules['ana_rango_max_f'] = 'nullable|numeric';
+            } else {
+                $rules['ana_ref_cualitativa'] = 'required|string|max:255';
+            }
         }
 
         $this->validate($rules, [
@@ -172,7 +217,7 @@ class CatalogoAnalisis extends Component
             'ana_nombre.required' => 'El nombre del examen es obligatorio.',
             'ana_costo.required' => 'El costo es obligatorio.',
             'ana_unidad_medida.required' => 'La unidad de medida es obligatoria para exámenes numéricos.',
-            'ana_ref_cualitativa.required' => 'Debe definir el valor esperado (Ej: Negativo, No Reactivo, N/A).',
+            'ana_ref_cualitativa.required' => 'Debe definir el valor esperado.',
         ]);
 
         TipoAnalisis::updateOrCreate(
@@ -181,16 +226,17 @@ class CatalogoAnalisis extends Component
                 'categoria_id' => $this->ana_categoria_id,
                 'nombre' => $this->ana_nombre,
                 'costo' => $this->ana_costo,
-                'unidad_medida' => $this->ana_tipo_parametro === 'numerico' ? $this->ana_unidad_medida : null,
-                'tipo_parámetro' => $this->ana_tipo_parametro,
-                'rango_min_masculino' => $this->ana_rango_min_m !== '' ? $this->ana_rango_min_m : null,
-                'rango_max_masculino' => $this->ana_rango_max_m !== '' ? $this->ana_rango_max_m : null,
-                'rango_min_femenino' => $this->ana_rango_min_f !== '' ? $this->ana_rango_min_f : null,
-                'rango_max_femenino' => $this->ana_rango_max_f !== '' ? $this->ana_rango_max_f : null,
-                'valor_referencia_cualitativo' => $this->ana_tipo_parametro === 'cualitativo' ? $this->ana_ref_cualitativa : null,
+                'unidad_medida' => ($this->ana_tipo_parametro === 'numerico' && ! $this->es_categoria_cultivo) ? $this->ana_unidad_medida : null,
+                'tipo_parámetro' => $this->es_categoria_cultivo ? 'cualitativo' : $this->ana_tipo_parametro,
+                'rango_min_masculino' => (! $this->es_categoria_cultivo && $this->ana_rango_min_m !== '') ? $this->ana_rango_min_m : null,
+                'rango_max_masculino' => (! $this->es_categoria_cultivo && $this->ana_rango_max_m !== '') ? $this->ana_rango_max_m : null,
+                'rango_min_femenino' => (! $this->es_categoria_cultivo && $this->ana_rango_min_f !== '') ? $this->ana_rango_min_f : null,
+                'rango_max_femenino' => (! $this->es_categoria_cultivo && $this->ana_rango_max_f !== '') ? $this->ana_rango_max_f : null,
+                'valor_referencia_cualitativo' => $this->es_categoria_cultivo ? 'N/A' : ($this->ana_tipo_parametro === 'cualitativo' ? $this->ana_ref_cualitativa : null),
             ]
         );
 
+        $this->reset(['ana_id', 'ana_categoria_id', 'ana_nombre', 'ana_costo', 'ana_unidad_medida', 'ana_tipo_parametro', 'ana_rango_min_m', 'ana_rango_max_m', 'ana_rango_min_f', 'ana_rango_max_f', 'ana_ref_cualitativa']);
         $this->mostrarModalAnalisis = false;
         session()->flash('mensaje', 'Examen guardado correctamente.');
     }
