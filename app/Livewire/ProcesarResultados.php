@@ -167,6 +167,23 @@ class ProcesarResultados extends Component
             'valores.*.valor' => 'nullable|string|max:255',
         ]);
 
+        // VALIDACIÓN ESTRICTA DE NÚMEROS Y NEGATIVOS
+        foreach ($this->valores as $id => $data) {
+            $valorLimpio = trim($data['valor']);
+            if ($data['tipo'] === 'numerico' && $valorLimpio !== '') {
+                if (! is_numeric($valorLimpio)) {
+                    session()->flash('error', "El parámetro '{$data['nombre']}' debe ser un número válido.");
+
+                    return;
+                }
+                if ((float) $valorLimpio < 0) {
+                    session()->flash('error', "El parámetro '{$data['nombre']}' no puede contener valores negativos.");
+
+                    return;
+                }
+            }
+        }
+
         DB::beginTransaction();
         try {
             $this->guardarResultadosEnBD();
@@ -205,6 +222,23 @@ class ProcesarResultados extends Component
         $this->validate([
             'valores.*.valor' => 'nullable|string|max:255',
         ]);
+
+        // VALIDACIÓN ESTRICTA DE NÚMEROS Y NEGATIVOS
+        foreach ($this->valores as $id => $data) {
+            $valorLimpio = trim($data['valor']);
+            if ($data['tipo'] === 'numerico' && $valorLimpio !== '') {
+                if (! is_numeric($valorLimpio)) {
+                    session()->flash('error', "El parámetro '{$data['nombre']}' debe ser un número válido.");
+
+                    return;
+                }
+                if ((float) $valorLimpio < 0) {
+                    session()->flash('error', "El parámetro '{$data['nombre']}' no puede contener valores negativos.");
+
+                    return;
+                }
+            }
+        }
 
         $this->resultados_a_previsualizar = array_filter($this->valores, function ($item) {
             return trim($item['valor']) !== '';

@@ -29,7 +29,6 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-        <!-- COLUMNA IZQUIERDA: CATEGORÍAS -->
         <div class="lg:col-span-4 space-y-4">
             <div class="bg-white shadow-sm rounded-2xl p-5 border border-gray-100 h-[75vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
@@ -115,7 +114,6 @@
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: EXÁMENES -->
         <div class="lg:col-span-8 space-y-4">
             <div class="bg-white shadow-sm rounded-2xl p-5 border border-gray-100 h-[75vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
@@ -195,7 +193,6 @@
 
     </div>
 
-    <!-- MODAL CATEGORÍA -->
     @if ($mostrarModalCategoria)
         <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
@@ -239,7 +236,6 @@
         </div>
     @endif
 
-    <!-- MODAL ANÁLISIS -->
     @if ($mostrarModalAnalisis)
         <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
@@ -291,7 +287,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase mb-2">Costo (Bs.)</label>
-                            <input type="number" step="0.5" wire:model="ana_costo"
+                            <input type="number" step="0.5" min="0" wire:model="ana_costo"
                                 class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 font-mono focus:ring-blue-500"
                                 placeholder="0.00">
                             @error('ana_costo')
@@ -345,13 +341,16 @@
                                     <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                         <p
                                             class="text-xs font-bold text-gray-500 uppercase text-center mb-3 border-b pb-2">
-                                            <i class="fas fa-male text-blue-400"></i> Rango Masculino</p>
+                                            <i class="fas fa-male text-blue-400"></i> Rango Masculino
+                                        </p>
                                         <div class="flex items-center gap-2">
-                                            <input type="number" step="0.01" wire:model="ana_rango_min_m"
+                                            <input type="number" step="0.01" min="0"
+                                                wire:model="ana_rango_min_m"
                                                 class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-blue-500"
                                                 placeholder="Mínimo">
                                             <span class="text-gray-400">-</span>
-                                            <input type="number" step="0.01" wire:model="ana_rango_max_m"
+                                            <input type="number" step="0.01" min="0"
+                                                wire:model="ana_rango_max_m"
                                                 class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-blue-500"
                                                 placeholder="Máximo">
                                         </div>
@@ -365,13 +364,16 @@
                                     <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                         <p
                                             class="text-xs font-bold text-gray-500 uppercase text-center mb-3 border-b pb-2">
-                                            <i class="fas fa-female text-pink-400"></i> Rango Femenino</p>
+                                            <i class="fas fa-female text-pink-400"></i> Rango Femenino
+                                        </p>
                                         <div class="flex items-center gap-2">
-                                            <input type="number" step="0.01" wire:model="ana_rango_min_f"
+                                            <input type="number" step="0.01" min="0"
+                                                wire:model="ana_rango_min_f"
                                                 class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-pink-500"
                                                 placeholder="Mínimo">
                                             <span class="text-gray-400">-</span>
-                                            <input type="number" step="0.01" wire:model="ana_rango_max_f"
+                                            <input type="number" step="0.01" min="0"
+                                                wire:model="ana_rango_max_f"
                                                 class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-pink-500"
                                                 placeholder="Máximo">
                                         </div>
@@ -385,7 +387,6 @@
                                 </div>
                             </div>
                         @else
-                            <!-- AQUÍ ESTÁ EL CAMBIO PRINCIPAL: EL SELECT EN VEZ DEL INPUT DE TEXTO -->
                             <div class="bg-purple-50/50 p-5 rounded-xl border border-purple-100">
                                 <h4 class="text-sm font-bold text-purple-800 mb-4 flex items-center gap-2">
                                     <i class="fas fa-spell-check"></i> Resultado Esperado (Referencia Normal)

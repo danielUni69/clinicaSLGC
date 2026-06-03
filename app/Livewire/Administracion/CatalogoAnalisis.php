@@ -205,12 +205,13 @@ class CatalogoAnalisis extends Component
 
             if ($this->ana_tipo_parametro === 'numerico') {
                 $rules['ana_unidad_medida'] = 'required|string|max:50';
-                $rules['ana_rango_min_m'] = 'nullable|numeric|lt:ana_rango_max_m';
-                $rules['ana_rango_max_m'] = 'nullable|numeric|gt:ana_rango_min_m';
-                $rules['ana_rango_min_f'] = 'nullable|numeric|lt:ana_rango_max_f';
-                $rules['ana_rango_max_f'] = 'nullable|numeric|gt:ana_rango_min_f';
+
+                // AÑADIMOS min:0 PARA PROHIBIR RANGOS NEGATIVOS EN EL CATÁLOGO
+                $rules['ana_rango_min_m'] = 'nullable|numeric|min:0|lt:ana_rango_max_m';
+                $rules['ana_rango_max_m'] = 'nullable|numeric|min:0|gt:ana_rango_min_m';
+                $rules['ana_rango_min_f'] = 'nullable|numeric|min:0|lt:ana_rango_max_f';
+                $rules['ana_rango_max_f'] = 'nullable|numeric|min:0|gt:ana_rango_min_f';
             } else {
-                // AHORA FORZAMOS A QUE ELIJA UNA DE LAS 3 OPCIONES EXACTAS
                 $rules['ana_ref_cualitativa'] = 'required|in:Negativo,No Reactivo,N/A';
             }
         }
@@ -220,6 +221,13 @@ class CatalogoAnalisis extends Component
             'ana_nombre.required' => 'El nombre del examen es obligatorio.',
             'ana_costo.required' => 'El costo es obligatorio.',
             'ana_unidad_medida.required' => 'La unidad de medida es obligatoria para exámenes numéricos.',
+
+            // Mensajes para evitar los negativos en el catálogo
+            'ana_rango_min_m.min' => 'El rango mínimo masculino no puede ser negativo.',
+            'ana_rango_max_m.min' => 'El rango máximo masculino no puede ser negativo.',
+            'ana_rango_min_f.min' => 'El rango mínimo femenino no puede ser negativo.',
+            'ana_rango_max_f.min' => 'El rango máximo femenino no puede ser negativo.',
+
             'ana_ref_cualitativa.required' => 'Debe definir el valor esperado.',
             'ana_ref_cualitativa.in' => 'Seleccione una opción válida de la lista.',
             'ana_rango_min_m.lt' => 'El mínimo debe ser menor que el máximo.',
