@@ -36,6 +36,7 @@ class CatalogoAnalisis extends Component
 
     public $ana_tipo_parametro = 'numerico';
 
+    // Convertimos nulls a strings vacíos para evitar errores al tipear
     public $ana_rango_min_m = '';
 
     public $ana_rango_max_m = '';
@@ -48,7 +49,6 @@ class CatalogoAnalisis extends Component
 
     public function render()
     {
-        // SEPARAMOS LAS CATEGORÍAS EN DOS LISTAS DESDE LA BASE DE DATOS
         $categoriasNormales = Categoria::where('es_cultivo', false)
             ->withCount('tiposAnalisis')
             ->orderBy('nombre')
@@ -85,11 +85,12 @@ class CatalogoAnalisis extends Component
     {
         if ($id) {
             $cat = Categoria::find($id);
-            $this->es_categoria_cultivo = (bool) $cat->es_cultivo;
-
-            if ($this->es_categoria_cultivo) {
-                $this->ana_tipo_parametro = 'cualitativo';
-                $this->ana_ref_cualitativa = 'N/A';
+            if ($cat) {
+                $this->es_categoria_cultivo = (bool) $cat->es_cultivo;
+                if ($this->es_categoria_cultivo) {
+                    $this->ana_tipo_parametro = 'cualitativo';
+                    $this->ana_ref_cualitativa = 'N/A';
+                }
             }
         } else {
             $this->es_categoria_cultivo = false;
@@ -165,10 +166,13 @@ class CatalogoAnalisis extends Component
             $this->ana_costo = $ana->costo;
             $this->ana_unidad_medida = $ana->unidad_medida;
             $this->ana_tipo_parametro = $ana->tipo_parámetro;
-            $this->ana_rango_min_m = $ana->rango_min_masculino;
-            $this->ana_rango_max_m = $ana->rango_max_masculino;
-            $this->ana_rango_min_f = $ana->rango_min_femenino;
-            $this->ana_rango_max_f = $ana->rango_max_femenino;
+
+            // Garantizar que los valores nulos lleguen como strings vacíos al input
+            $this->ana_rango_min_m = $ana->rango_min_masculino ?? '';
+            $this->ana_rango_max_m = $ana->rango_max_masculino ?? '';
+            $this->ana_rango_min_f = $ana->rango_min_femenino ?? '';
+            $this->ana_rango_max_f = $ana->rango_max_femenino ?? '';
+
             $this->ana_ref_cualitativa = $ana->valor_referencia_cualitativo;
 
             $this->verificarSiEsCultivo($this->ana_categoria_id);
@@ -203,22 +207,32 @@ class CatalogoAnalisis extends Component
 
             if ($this->ana_tipo_parametro === 'numerico') {
                 $rules['ana_unidad_medida'] = 'required|string|max:50';
-                $rules['ana_rango_min_m'] = 'nullable|numeric';
-                $rules['ana_rango_max_m'] = 'nullable|numeric';
-                $rules['ana_rango_min_f'] = 'nullable|numeric';
-                $rules['ana_rango_max_f'] = 'nullable|numeric';
+
+                // REGLAS ESTRICTAS DE MIN-MAX
+                // Si el max_m tiene un valor, validamos que min_m sea obligatorio y que sea menor (lt).
+                $rules['ana_rango_min_m'] = 'nullable|numeric|lt:ana_rango_max_m';
+                $rules['ana_rango_max_m'] = 'nullable|numeric|gt:ana_rango_min_m';
+
+                $rules['ana_rango_min_f'] = 'nullable|numeric|lt:ana_rango_max_f';
+                $rules['ana_rango_max_f'] = 'nullable|numeric|gt:ana_rango_min_f';
             } else {
                 $rules['ana_ref_cualitativa'] = 'required|string|max:255';
             }
         }
 
-        $this->validate($rules, [
+        $messages = [
             'ana_categoria_id.required' => 'Debe seleccionar una categoría.',
             'ana_nombre.required' => 'El nombre del examen es obligatorio.',
             'ana_costo.required' => 'El costo es obligatorio.',
             'ana_unidad_medida.required' => 'La unidad de medida es obligatoria para exámenes numéricos.',
             'ana_ref_cualitativa.required' => 'Debe definir el valor esperado.',
-        ]);
+            'ana_rango_min_m.lt' => 'El mínimo debe ser menor que el máximo.',
+            'ana_rango_max_m.gt' => 'El máximo debe ser mayor que el mínimo.',
+            'ana_rango_min_f.lt' => 'El mínimo debe ser menor que el máximo.',
+            'ana_rango_max_f.gt' => 'El máximo debe ser mayor que el mínimo.',
+        ];
+
+        $this->validate($rules, $messages);
 
         TipoAnalisis::updateOrCreate(
             ['id' => $this->ana_id],

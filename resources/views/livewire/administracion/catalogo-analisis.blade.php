@@ -250,8 +250,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 pb-6 border-b border-gray-100">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase mb-2">Categoría</label>
-                            <select wire:model.live="ana_categoria_id"
-                                class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-blue-500">
+                            <select wire:model.live="ana_categoria_id" {{ $ana_id ? 'disabled' : '' }}
+                                class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <option value="">Seleccione una categoría...</option>
                                 <optgroup label="Análisis Generales">
                                     @foreach ($categoriasNormales as $c)
@@ -264,6 +264,11 @@
                                     @endforeach
                                 </optgroup>
                             </select>
+                            @if ($ana_id)
+                                <span class="text-[10px] text-gray-500 mt-1 block"><i
+                                        class="fas fa-lock text-gray-400"></i> La categoría no se puede modificar tras
+                                    la creación.</span>
+                            @endif
                             @error('ana_categoria_id')
                                 <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                             @enderror
@@ -331,33 +336,47 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                         <p
                                             class="text-xs font-bold text-gray-500 uppercase text-center mb-3 border-b pb-2">
-                                            <i class="fas fa-male text-blue-400"></i> Rango Masculino</p>
+                                            <i class="fas fa-male text-blue-400"></i> Rango Masculino
+                                        </p>
                                         <div class="flex items-center gap-2">
                                             <input type="number" step="0.01" wire:model="ana_rango_min_m"
-                                                class="w-1/2 border-gray-300 rounded p-2 text-sm"
+                                                class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-blue-500"
                                                 placeholder="Mínimo">
                                             <span class="text-gray-400">-</span>
                                             <input type="number" step="0.01" wire:model="ana_rango_max_m"
-                                                class="w-1/2 border-gray-300 rounded p-2 text-sm"
+                                                class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-blue-500"
                                                 placeholder="Máximo">
                                         </div>
+                                        @error('ana_rango_min_m')
+                                            <span class="text-red-500 text-[10px] mt-1 block">{{ $message }}</span>
+                                        @enderror
+                                        @error('ana_rango_max_m')
+                                            <span class="text-red-500 text-[10px] mt-1 block">{{ $message }}</span>
+                                        @enderror
                                     </div>
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                         <p
                                             class="text-xs font-bold text-gray-500 uppercase text-center mb-3 border-b pb-2">
-                                            <i class="fas fa-female text-pink-400"></i> Rango Femenino</p>
+                                            <i class="fas fa-female text-pink-400"></i> Rango Femenino
+                                        </p>
                                         <div class="flex items-center gap-2">
                                             <input type="number" step="0.01" wire:model="ana_rango_min_f"
-                                                class="w-1/2 border-gray-300 rounded p-2 text-sm"
+                                                class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-pink-500"
                                                 placeholder="Mínimo">
                                             <span class="text-gray-400">-</span>
                                             <input type="number" step="0.01" wire:model="ana_rango_max_f"
-                                                class="w-1/2 border-gray-300 rounded p-2 text-sm"
+                                                class="w-1/2 border-gray-300 rounded p-2 text-sm focus:ring-pink-500"
                                                 placeholder="Máximo">
                                         </div>
+                                        @error('ana_rango_min_f')
+                                            <span class="text-red-500 text-[10px] mt-1 block">{{ $message }}</span>
+                                        @enderror
+                                        @error('ana_rango_max_f')
+                                            <span class="text-red-500 text-[10px] mt-1 block">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
                             </div>
@@ -366,7 +385,8 @@
                                 <h4 class="text-sm font-bold text-purple-800 mb-4 flex items-center gap-2"><i
                                         class="fas fa-spell-check"></i> Resultado Esperado (Referencia)</h4>
                                 <p class="text-xs text-gray-600 mb-3">Escriba el valor que el sistema considerará como
-                                    <strong>Normal</strong> para no activar la alerta roja en el PDF.</p>
+                                    <strong>Normal</strong> para no activar la alerta roja en el PDF.
+                                </p>
                                 <input type="text" wire:model="ana_ref_cualitativa"
                                     class="w-full bg-white border border-gray-300 rounded-lg p-2.5 font-bold text-purple-900 focus:ring-purple-500"
                                     placeholder="Ej: Negativo, No Reactivo, N/A">
