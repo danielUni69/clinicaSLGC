@@ -182,16 +182,7 @@
                             {{ $analisis->tipo_parámetro === 'numerico' ? $analisis->unidad_medida : '' }}
                         </td>
 
-                        <td style="text-align: right; color: #6b7280; font-size: 11px;">
-                            @if ($analisis->tipo_parámetro === 'numerico')
-                                {{ $esFemenino ? $analisis->rango_min_femenino : $analisis->rango_min_masculino }} -
-                                {{ $esFemenino ? $analisis->rango_max_femenino : $analisis->rango_max_masculino }}
-                            @else
-                                @if ($analisis->valor_referencia_cualitativo && $analisis->valor_referencia_cualitativo !== 'N/A')
-                                    {{ $analisis->valor_referencia_cualitativo }}
-                                @endif
-                            @endif
-                        </td>
+        
                     </tr>
                 @endforeach
             @endforeach

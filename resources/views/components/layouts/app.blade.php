@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ asset('img/logo-clinica.ico') }}" type="image/x-icon">
+    
 
     <title>{{ $title ?? 'SGLC - Clínica Illapa' }}</title>
 
@@ -228,7 +228,7 @@
         </header>
 
         <main class="w-full h-full flex-1 overflow-y-auto bg-white">
-            <div class="relative w-full h-full min-h-screen">
+            <div class="relative w-full min-h-screen">
                 {{ $slot }}
             </div>
         </main>
